@@ -1,9 +1,12 @@
 import express from 'express';
 import multer from 'multer';
 import { fileTypeFromBuffer } from 'file-type'; // Import from the file-type package
+import cors from 'cors';
 
 const app = express();
-const port = 3000;
+app.use(cors()); // Allow all origins or configure specific ones
+
+const port = 5000;
 
 // Middleware to parse JSON requests
 app.use(express.json());
