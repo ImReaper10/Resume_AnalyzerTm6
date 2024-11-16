@@ -46,8 +46,6 @@ app.post('/api/resume-upload', upload.single('resume_file'), async (req, res, ne
       status: 'success',
     });
   } catch (error) {
-    console.error('Error during file upload:', error);  // Log any general errors
-
     // You can add custom error handling if necessary
     res.status(500).json({
       error: 'An error occurred while processing the file.',
