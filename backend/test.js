@@ -144,7 +144,7 @@ async function testServer() {
             "authorization": "Bearer " + jwt
         }
     });
-    console.log(res)
+    console.log(res.data)
 }
 
 testServer();
