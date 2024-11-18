@@ -98,9 +98,7 @@ app.post('/api/register', (req, res) => {
         }
         let plainPassword;
         try {
-            console.log(password)
             plainPassword = decrypt(password);
-            console.log(plainPassword)
         } catch (err) {
             return res.status(400).json({ error: "Invalid encrypted password" });
         }
@@ -140,24 +138,59 @@ app.post('/api/login', (req, res) => {
     res.status(200).json({ token });
 });
 
+//Function for checking if logged in (this is mainly just for testing)
+app.get('/api/account', authenticateToken, (req, res) => {
+    const userEmail = req.user.email;
+
+    const user = users.find(u => u.email === userEmail);
+    if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+    }
+
+    res.status(200).json({
+        email: user.email,
+        username: user.username
+    });
+});
+
+/* Example use of the above
+
+//All we do is just add the jwt to the authorization header with the "Bearer " next to it, message me (james) if you have a hard time authenticating
+const res = await axios['get'](`${API_URL}/account`, {
+    headers: {
+        "authorization": "Bearer " + jwt
+    }
+});
+console.log(res)
+
+*/
+
+
 app.listen(3000, "localhost", () => {
     console.log("Server started...");
 });
 
 //This is middleware for checking if logged in
 function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    try
+    {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token) {
-        return res.status(401).json({ error: 'Access denied. No token provided.' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Invalid or expired token.' });
+        if (!token) {
+            return res.status(401).json({ error: 'Access denied. No token provided.' });
         }
-        req.user = user;
-        next();
-    });
+
+        jwt.verify(token, JWT_SECRET, (err, user) => {
+            if (err) {
+                return res.status(403).json({ error: 'Invalid or expired token.' });
+            }
+            req.user = user;
+            next();
+        });
+    }
+    catch(err)
+    {
+        return res.status(400).json({ error: 'An error occured: ' + err.message});
+    }
 }

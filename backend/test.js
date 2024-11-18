@@ -107,18 +107,26 @@ async function testServer() {
         },
     ];
 
+    //jwt
+    let jwt = "";
     for (const testCase of testCases) {
         try {
             console.log(`Running: ${testCase.name}`);
             const response = await axios[testCase.method](testCase.endpoint, testCase.data);
             if (response.status === testCase.expectedStatus) {
                 console.log(`✔ Passed: ${testCase.name}`);
+                if(testCase.endpoint === `${API_URL}/login`)
+                {
+                    jwt = response.data.token;
+                }
+                console.log(response.message)
             } else {
                 console.error(`✖ Failed: ${testCase.name} (Unexpected Status: ${response.status})`);
             }
         } catch (err) {
             if (err.response && err.response.status === testCase.expectedStatus) {
                 console.log(`✔ Passed: ${testCase.name}`);
+                console.log(err.message)
             } else {
                 console.error(`✖ Failed: ${testCase.name}`);
                 if (err.response) {
@@ -130,6 +138,13 @@ async function testServer() {
             }
         }
     }
+    console.log(jwt)
+    const res = await axios['get'](`${API_URL}/account`, {
+        headers: {
+            "authorization": "Bearer " + jwt
+        }
+    });
+    console.log(res)
 }
 
 testServer();
