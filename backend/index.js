@@ -151,7 +151,7 @@ app.get("/api/public-key", (req, res) => {
     );
 });
 
-//Maybe change it to allow same username
+//Maybe change it to allow same username, also I have to add password strength check
 app.post("/api/register", async (req, res) => {
     try {
         const { email, password, username, keypairId} = req.body;
