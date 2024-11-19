@@ -1,7 +1,7 @@
-import express from 'express';
-import multer from 'multer';
-import { fileTypeFromBuffer } from 'file-type'; // Import from the file-type package
-import cors from 'cors';
+const express = require('express');
+const multer = require('multer');
+const fileType = require('file-type');
+const cors = require('cors');
 
 const app = express();
 app.use(cors()); // Allow all origins or configure specific ones
@@ -19,7 +19,7 @@ const upload = multer({
 
 // Helper function to validate file type
 const validateFileType = async (fileBuffer) => {
-  const type = await fileTypeFromBuffer(fileBuffer);
+  const type = await fileType.fromBuffer(fileBuffer); // Use the correct method for `file-type` module
   return type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 };
 
@@ -49,7 +49,6 @@ app.post('/api/resume-upload', upload.single('resume_file'), async (req, res, ne
       status: 'success',
     });
   } catch (error) {
-    // You can add custom error handling if necessary
     res.status(500).json({
       error: 'An error occurred while processing the file.',
       status: 'error',
@@ -67,7 +66,6 @@ app.use((err, req, res, next) => {
   }
   next(err);  // Pass the error to the default error handler if it's not a Multer error
 });
-
 
 // Endpoint for Job Description Text Input
 app.post('/api/job-description', (req, res) => {
@@ -89,9 +87,9 @@ app.post('/api/job-description', (req, res) => {
   });
 });
 
-// Start the server
-app.listen(port, () => {
+// Start the server and export it
+const server = app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
-export default app;
+module.exports = { app, server };  // Export both app and server
