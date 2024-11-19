@@ -39,26 +39,7 @@ function getJWTSecret() {
 const JWT_SECRET = getJWTSecret();
 const JWT_EXPIRATION = "1h";
 
-let privateKey, publicKey;
-
-// Generate RSA key pair
-crypto.generateKeyPair(
-    "rsa",
-    {
-        modulusLength: 2048,
-        publicKeyEncoding: { type: "spki", format: "pem" },
-        privateKeyEncoding: { type: "pkcs8", format: "pem" },
-    },
-    (err, pubKey, privKey) => {
-        if (err) {
-            console.error("Error generating key pair:", err);
-            process.exit(1);
-        }
-        publicKey = pubKey;
-        privateKey = privKey;
-        console.log("Key pair generated successfully");
-    }
-);
+let privateKeys = {};
 
 // Set up SQLite database
 const db = new sqlite3.Database(DATABASE_FILE_PATH, (err) => {
@@ -131,11 +112,17 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-function decrypt(data) {
+function decrypt(data, keypairId) {
+    const privKey = privateKeys[keypairId];
+    if(!privKey)
+    {
+        throw Error("Invalid keypairId");
+    }
+    delete privateKeys[keypairId];
     const encryptedData = Buffer.from(data, "base64");
     const decryptedData = crypto.privateDecrypt(
         {
-            key: privateKey,
+            key: privKey,
             padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
         },
         encryptedData
@@ -144,15 +131,36 @@ function decrypt(data) {
 }
 
 app.get("/api/public-key", (req, res) => {
-    res.send(publicKey);
+    crypto.generateKeyPair(
+        "rsa",
+        {
+            modulusLength: 2048,
+            publicKeyEncoding: { type: "spki", format: "pem" },
+            privateKeyEncoding: { type: "pkcs8", format: "pem" },
+        },
+        (err, pubKey, privKey) => {
+            if (err) {
+                console.error("Error generating key pair:", err);
+                res.status(400).json({ error: "Error generating key" });
+                return;
+            }
+            let keypairId = crypto.randomBytes(32).toString("hex");
+            privateKeys[keypairId] = privKey;
+            res.send({key: pubKey, keypairId});
+            console.log("Key pair generated successfully");
+        }
+    );
 });
 
 //Maybe change it to allow same username
 app.post("/api/register", async (req, res) => {
     try {
-        const { email, password, username } = req.body;
+        const { email, password, username, keypairId} = req.body;
         if (!email || !password || !username) {
             return res.status(400).json({ error: "Missing email, username, or password" });
+        }
+        if (!keypairId) {
+            return res.status(400).json({ error: "Missing keypairId" });
         }
         if (!isValidEmail(email)) {
             return res.status(400).json({ error: "Invalid email format" });
@@ -162,7 +170,7 @@ app.post("/api/register", async (req, res) => {
         }
         let plainPassword;
         try {
-            plainPassword = decrypt(password);
+            plainPassword = decrypt(password, keypairId);
         } catch (err) {
             return res.status(400).json({ error: "Invalid encrypted password" });
         }
@@ -180,7 +188,11 @@ app.post("/api/register", async (req, res) => {
 });
 
 app.post("/api/login", async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, keypairId } = req.body;
+
+    if (!keypairId) {
+        return res.status(400).json({ error: "Missing keypairId" });
+    }
 
     if (!email || !password) {
         return res.status(400).json({ error: "Missing email or password" });
@@ -188,7 +200,7 @@ app.post("/api/login", async (req, res) => {
 
     let plainPassword;
     try {
-        plainPassword = decrypt(password);
+        plainPassword = decrypt(password, keypairId);
     } catch (err) {
         return res.status(400).json({ error: "Invalid encrypted password: " + err.message });
     }
@@ -329,8 +341,8 @@ function authenticateToken(req, res, next) {
     try
     {
         const authHeader = req.headers["authorization"];
-        const tokenEnc = authHeader && authHeader.split(" ")[1];
-        const token = decrypt(tokenEnc);
+        const tokenEnc = authHeader && authHeader.split(" ");
+        const token = decrypt(tokenEnc[2], tokenEnc[1]);
         if (!token) {
             return res.status(401).json({ error: "Access denied. No token provided." });
         }

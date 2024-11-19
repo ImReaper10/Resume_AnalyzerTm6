@@ -12,12 +12,12 @@ async function testServer() {
 
     console.log("Starting tests...");
 
-    const publicKeyResponse = await axios.get(`${API_URL}/public-key`);
-    const publicKey = publicKeyResponse.data;
-
     // Helper to encrypt passwords using the public key
     const crypto = require('crypto');
-    function encrypt(password) {
+    async function encrypt(password) {
+        const publicKeyResponse = await axios(`${API_URL}/public-key`);
+        const publicKey = publicKeyResponse.data.key;
+        const keypairId = publicKeyResponse.data.keypairId;
         const encryptedBuffer = crypto.publicEncrypt(
             {
                 key: publicKey,
@@ -25,7 +25,21 @@ async function testServer() {
             },
             Buffer.from(password)
         );
-        return encryptedBuffer.toString('base64');
+        return keypairId + " " + encryptedBuffer.toString('base64');
+    }
+
+    async function encryptPassword(password) {
+        const publicKeyResponse = await axios(`${API_URL}/public-key`);
+        const publicKey = publicKeyResponse.data.key;
+        const keypairId = publicKeyResponse.data.keypairId;
+        const encryptedBuffer = crypto.publicEncrypt(
+            {
+                key: publicKey,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            },
+            Buffer.from(password)
+        );
+        return {password: encryptedBuffer.toString('base64'), keypairId};
     }
 
     const testCases = [
@@ -36,7 +50,7 @@ async function testServer() {
             data: {
                 email: "testuser@example.com",
                 username: "testuser",
-                password: encrypt("securePassword123"),
+                ... await encryptPassword("securePassword123")
             },
             expectedStatus: 201,
         },
@@ -46,7 +60,7 @@ async function testServer() {
             method: "post",
             data: {
                 email: "testuser@example.com",
-                password: encrypt("securePassword123"),
+                ... await encryptPassword("securePassword123"),
             },
             expectedStatus: 200,
         },
@@ -57,7 +71,7 @@ async function testServer() {
             data: {
                 email: "testuser@example.com",
                 username: "testuser2",
-                password: encrypt("securePassword456"),
+                ... await encryptPassword("securePassword456"),
             },
             expectedStatus: 400,
         },
@@ -68,7 +82,7 @@ async function testServer() {
             data: {
                 email: "anotheruser@example.com",
                 username: "testuser",
-                password: encrypt("anotherSecurePassword"),
+                ... await encryptPassword("anotherSecurePassword"),
             },
             expectedStatus: 400,
         },
@@ -78,7 +92,7 @@ async function testServer() {
             method: "post",
             data: {
                 email: "testuser@example.com",
-                password: encrypt("wrongPassword"),
+                ... await encryptPassword("wrongPassword"),
             },
             expectedStatus: 400,
         },
@@ -89,7 +103,7 @@ async function testServer() {
             data: {
                 email: "notanemail",
                 username: "invalidemailuser",
-                password: encrypt("securePassword789"),
+                ... await encryptPassword("securePassword789"),
             },
             expectedStatus: 400,
         },
@@ -99,7 +113,7 @@ async function testServer() {
             method: "post",
             data: {
                 email: "nonexistent@example.com",
-                password: encrypt("irrelevantPassword"),
+                ... await encryptPassword("irrelevantPassword"),
             },
             expectedStatus: 400,
         },
@@ -145,16 +159,16 @@ async function testServer() {
             }
         }
     }
-
+    
     const headers = {
-        authorization: `Bearer ${encrypt(jwt)}`,
+        authorization: `Bearer ${await encrypt(jwt)}`,
     };
     console.log(jwt)
     const res = await axios['get'](`${API_URL}/account`, {
         headers: headers
     });
     console.log(res.data)
-    // Test resume upload
+
     const resumeTests = [
         {
             name: "Upload valid PDF",
@@ -179,7 +193,11 @@ async function testServer() {
             console.log(`Running: ${test.name}`);
             const formData = new FormData();
             formData.append('resume_file', fileBuffer, path.basename(test.filePath));
-    
+
+            const headers = {
+                authorization: `Bearer ${await encrypt(jwt)}`,
+            };
+
             const response = await axios.post(`${API_URL}/resume-upload`, formData, {
                 headers: {
                     ...headers,
@@ -231,6 +249,9 @@ async function testServer() {
     for (const testCase of jobDescriptionTests) {
         try {
             console.log(`Running: ${testCase.name}`);
+            const headers = {
+                authorization: `Bearer ${await encrypt(jwt)}`,
+            };
             const response = await axios[testCase.method](testCase.endpoint, testCase.data, { headers });
             if (response.status === testCase.expectedStatus) {
                 console.log(`✔ Passed: ${testCase.name}`);
