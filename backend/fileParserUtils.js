@@ -1,4 +1,4 @@
-const { PDFDocument } = require('pdf-lib');
+const pdfParse = require('pdf-parse');
 
 /**
  * Extracts text from a PDF file.
@@ -7,18 +7,8 @@ const { PDFDocument } = require('pdf-lib');
  */
 async function extractTextFromPdf(fileBuffer) {
     try {
-        const pdfDoc = await PDFDocument.load(fileBuffer);
-        const pages = pdfDoc.getPages();
-        let extractedText = '';
-
-        for (const page of pages) {
-            const pageText = await page.getTextContent();
-            extractedText += pageText.items.map(item => item.str).join(' ');
-        }
-
-        extractedText = extractedText.replace(/\s+/g, ' ').trim();
-
-        return extractedText;
+        const data = await pdfParse(fileBuffer);
+        return data.text.replace(/\s+/g, ' ').trim();
     } catch (error) {
         console.error('Error extracting text from PDF:', error);
         throw new Error('Failed to extract text from PDF');

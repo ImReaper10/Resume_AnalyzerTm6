@@ -4,8 +4,23 @@ const express = require("express");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const sqlite3 = require("sqlite3").verbose();
+const {extractTextFromPdf} = require("./fileParserUtils");
 const app = express();
+const cors = require('cors');
+const multer = require('multer');
+const fileType = require('file-type');
 app.use(express.json());
+app.use(cors());
+
+const upload = multer({
+    limits: { fileSize: 2 * 1024 * 1024 },
+    storage: multer.memoryStorage(),
+  });
+
+const validateFileType = async (fileBuffer) => {
+const type = await fileType.fromBuffer(fileBuffer);
+return type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+};
 
 const SECRET_FILE_PATH = path.join(__dirname, "jwt_secret.key");
 const DATABASE_FILE_PATH = path.join(__dirname, "users.db"); 
@@ -132,6 +147,7 @@ app.get("/api/public-key", (req, res) => {
     res.send(publicKey);
 });
 
+//Maybe change it to allow same username
 app.post("/api/register", async (req, res) => {
     try {
         const { email, password, username } = req.body;
@@ -218,6 +234,91 @@ app.get("/api/account", authenticateToken, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "An error occurred: " + err.message });
     }
+});
+
+const temp_storage = {}; //This is for the PDF text and job descriptions
+
+app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), async (req, res) => {
+    try {
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({
+                error: 'No file uploaded.',
+                status: 'error',
+            });
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            return res.status(400).json({
+                error: 'File size exceeds the limit of 2MB.',
+                status: 'error',
+            });
+        }
+
+        const isValidFileType = await validateFileType(file.buffer);
+        if (!isValidFileType) {
+            return res.status(400).json({
+                error: 'Invalid file type. Only PDF or DOCX files are allowed.',
+                status: 'error',
+            });
+        }
+
+        const extractedText = await extractTextFromPdf(file.buffer);
+
+        // Store extracted resume text associated with the user
+        if (!temp_storage[req.user.email]) {
+            temp_storage[req.user.email] = {};
+        }
+        temp_storage[req.user.email].resumeText = extractedText;
+
+        res.status(200).json({
+            message: 'Resume uploaded and text extracted successfully.',
+            status: 'success',
+        });
+    } catch (error) {
+        console.error('Error processing resume upload:', error);
+        res.status(500).json({
+            error: 'An error occurred while processing the file.',
+            status: 'error',
+        });
+    }
+});
+
+// Global error handler for Multer file size errors
+app.use((err, req, res, next) => {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+        error: 'File size exceeds the limit of 2MB.',
+        status: 'error',
+        });
+    }
+    next(err);
+});
+
+app.post('/api/job-description', authenticateToken, (req, res) => {
+    const { job_description } = req.body;
+
+    if (!job_description || job_description.length > 5000) {
+        return res.status(400).json({
+            error: 'Job description exceeds character limit.',
+            status: 'error',
+        });
+    }
+
+    // Clean the job description by removing extraneous whitespace
+    const cleanedDescription = job_description.trim();
+
+    // Store the job description associated with the user
+    if (!temp_storage[req.user.email]) {
+        temp_storage[req.user.email] = {};
+    }
+    temp_storage[req.user.email].jobDescription = cleanedDescription;
+
+    res.status(200).json({
+        message: 'Job description submitted and stored successfully.',
+        status: 'success',
+    });
 });
 
 app.listen(3000, "localhost", () => {
