@@ -11,7 +11,7 @@ async function testServer() {
 
     // Helper to encrypt passwords using the public key
     const crypto = require('crypto');
-    function encryptPassword(password) {
+    function encrypt(password) {
         const encryptedBuffer = crypto.publicEncrypt(
             {
                 key: publicKey,
@@ -30,7 +30,7 @@ async function testServer() {
             data: {
                 email: "testuser@example.com",
                 username: "testuser",
-                password: encryptPassword("securePassword123"),
+                password: encrypt("securePassword123"),
             },
             expectedStatus: 201,
         },
@@ -40,7 +40,7 @@ async function testServer() {
             method: "post",
             data: {
                 email: "testuser@example.com",
-                password: encryptPassword("securePassword123"),
+                password: encrypt("securePassword123"),
             },
             expectedStatus: 200,
         },
@@ -51,7 +51,7 @@ async function testServer() {
             data: {
                 email: "testuser@example.com",
                 username: "testuser2",
-                password: encryptPassword("securePassword456"),
+                password: encrypt("securePassword456"),
             },
             expectedStatus: 400,
         },
@@ -62,7 +62,7 @@ async function testServer() {
             data: {
                 email: "anotheruser@example.com",
                 username: "testuser",
-                password: encryptPassword("anotherSecurePassword"),
+                password: encrypt("anotherSecurePassword"),
             },
             expectedStatus: 400,
         },
@@ -72,7 +72,7 @@ async function testServer() {
             method: "post",
             data: {
                 email: "testuser@example.com",
-                password: encryptPassword("wrongPassword"),
+                password: encrypt("wrongPassword"),
             },
             expectedStatus: 400,
         },
@@ -83,7 +83,7 @@ async function testServer() {
             data: {
                 email: "notanemail",
                 username: "invalidemailuser",
-                password: encryptPassword("securePassword789"),
+                password: encrypt("securePassword789"),
             },
             expectedStatus: 400,
         },
@@ -93,7 +93,7 @@ async function testServer() {
             method: "post",
             data: {
                 email: "nonexistent@example.com",
-                password: encryptPassword("irrelevantPassword"),
+                password: encrypt("irrelevantPassword"),
             },
             expectedStatus: 400,
         },
@@ -142,7 +142,7 @@ async function testServer() {
     console.log(jwt)
     const res = await axios['get'](`${API_URL}/account`, {
         headers: {
-            "authorization": "Bearer " + jwt
+            "authorization": "Bearer " + encrypt(jwt)
         }
     });
     console.log(res.data)
