@@ -3,6 +3,7 @@ const axios = require('axios');
 const API_URL = 'http://localhost:3000/api';
 
 async function testServer() {
+
     console.log("Starting tests...");
 
     const publicKeyResponse = await axios.get(`${API_URL}/public-key`);

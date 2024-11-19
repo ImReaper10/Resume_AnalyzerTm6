@@ -1,2 +1,3 @@
 /node_modules
 jwt_secret.key
+users.db
