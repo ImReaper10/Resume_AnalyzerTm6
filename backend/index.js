@@ -61,7 +61,12 @@ const db = new sqlite3.Database(DATABASE_FILE_PATH, (err) => {
             )`,
             (err) => {
                 if (err) {
-                    console.error("Error creating users table:", err.message);
+                    if(err.message.indexOf("already exists") !== -1)
+                    {
+                        console.log("Users table found.")
+                    } else {
+                        console.error("Error creating users table:", err.message);
+                    }
                 } else {
                     console.log("Users table created.");
                 }
