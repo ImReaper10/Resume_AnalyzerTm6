@@ -147,7 +147,6 @@ app.get("/api/public-key", (req, res) => {
             let keypairId = crypto.randomBytes(32).toString("hex");
             privateKeys[keypairId] = privKey;
             res.send({key: pubKey, keypairId});
-            console.log("Key pair generated successfully");
         }
     );
 });
