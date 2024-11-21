@@ -151,6 +151,8 @@ app.get("/api/public-key", (req, res) => {
     );
 });
 
+
+
 //Maybe change it to allow same username, also I have to add password strength check
 app.post("/api/register", async (req, res) => {
     try {
@@ -173,6 +175,14 @@ app.post("/api/register", async (req, res) => {
         } catch (err) {
             return res.status(400).json({ error: "Invalid encrypted password" });
         }
+
+        let passcheck = checkSecurePassword(plainPassword);
+
+        if(!passcheck.valid)
+        {
+            return res.status(400).json({ error: passcheck.message });
+        }
+
         const salt = crypto.randomBytes(16).toString("hex");
         const hashedPassword = crypto
             .pbkdf2Sync(plainPassword, salt, 1000, 64, "sha512")
@@ -358,4 +368,30 @@ function authenticateToken(req, res, next) {
     {
         return res.status(400).json({ error: "There was an error while authenticating: "  + err.message});
     }
+}
+
+function checkSecurePassword(password) {
+    const minLength = 8;
+    const hasUppercase = /[A-Z]/;
+    const hasLowercase = /[a-z]/;
+    const hasNumber = /[0-9]/;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
+
+    if (password.length < minLength) {
+        return { valid: false, message: "Password must be at least 8 characters long." };
+    }
+    if (!hasUppercase.test(password)) {
+        return { valid: false, message: "Password must include at least one uppercase letter." };
+    }
+    if (!hasLowercase.test(password)) {
+        return { valid: false, message: "Password must include at least one lowercase letter." };
+    }
+    if (!hasNumber.test(password)) {
+        return { valid: false, message: "Password must include at least one number." };
+    }
+    if (!hasSpecialChar.test(password)) {
+        return { valid: false, message: "Password must include at least one special character." };
+    }
+
+    return { valid: true, message: "Password is secure." };
 }
