@@ -50,7 +50,7 @@ async function testServer() {
             data: {
                 email: "testuser@example.com",
                 username: "testuser",
-                ... await encryptPassword("securePassword123")
+                ... await encryptPassword("securePassword12345$")
             },
             expectedStatus: 201,
         },
@@ -60,7 +60,7 @@ async function testServer() {
             method: "post",
             data: {
                 email: "testuser@example.com",
-                ... await encryptPassword("securePassword123"),
+                ... await encryptPassword("securePassword12345$"),
             },
             expectedStatus: 200,
         },
@@ -82,7 +82,7 @@ async function testServer() {
             data: {
                 email: "anotheruser@example.com",
                 username: "testuser",
-                ... await encryptPassword("anotherSecurePassword"),
+                ... await encryptPassword("securePassword12345$"),
             },
             expectedStatus: 400,
         },
@@ -103,7 +103,7 @@ async function testServer() {
             data: {
                 email: "notanemail",
                 username: "invalidemailuser",
-                ... await encryptPassword("securePassword789"),
+                ... await encryptPassword("securePassword12345$"),
             },
             expectedStatus: 400,
         },
@@ -186,7 +186,7 @@ async function testServer() {
             expectedStatus: 400,
         },
     ];
-
+    
     for (const test of resumeTests) {
         try {
             const fileBuffer = fs.readFileSync(test.filePath);
@@ -224,7 +224,7 @@ async function testServer() {
             }
         }
     }
-
+   
     const jobDescriptionTests = [
         {
             name: "Submit valid job description",
