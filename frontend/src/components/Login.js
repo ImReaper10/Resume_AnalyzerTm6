@@ -1,40 +1,5 @@
 import React, { useState } from "react";
-import axios from 'axios';
-import forge from 'node-forge';
-
-async function login(email, password) {
-    try {
-        const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
-        const { key: publicKey, keypairId } = publicKeyResponse.data;
-
-        if (!publicKey || !keypairId) {
-            throw new Error('Failed to retrieve public key or keypairId.');
-        }
-
-        const forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
-
-        const encryptedPassword = forge.util.encode64(
-            forgePublicKey.encrypt(password, 'RSA-OAEP', {
-                md: forge.md.sha1.create(),
-                mgf1: {
-                    md: forge.md.sha1.create()
-                }
-            })
-        );
-
-        const response = await axios.post('http://localhost:5000/api/login', {
-            email,
-            password: encryptedPassword,
-            keypairId,
-        });
-
-        const { token } = response.data;
-        return { success: true, token };
-    } catch (error) {
-        const errorMessage = error.response?.data?.error || error.message;
-        return { success: false, message: errorMessage };
-    }
-}
+import { login } from "../utils/networkmanager";
 
 //BELOW IS JUST A TEST PAGE TO SEE IF THE ABOVE WORKS PROPERLY
 const Login = () => {

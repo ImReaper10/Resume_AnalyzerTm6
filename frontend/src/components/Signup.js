@@ -1,40 +1,5 @@
 import React, { useState } from "react";
-import axios from 'axios';
-import forge from 'node-forge';
-
-async function signup(email, username, password) {
-    try {
-        const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
-        const { key: publicKey, keypairId } = publicKeyResponse.data;
-
-        if (!publicKey || !keypairId) {
-            throw new Error('Failed to retrieve public key or keypairId.');
-        }
-
-        const forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
-
-        const encryptedPassword = forge.util.encode64(
-            forgePublicKey.encrypt(password, 'RSA-OAEP', {
-                md: forge.md.sha1.create(),
-                mgf1: {
-                    md: forge.md.sha1.create()
-                }
-            })
-        );
-
-        const response = await axios.post('http://localhost:5000/api/register', {
-            email,
-            password: encryptedPassword,
-            username,
-            keypairId,
-        });
-
-        return { success: true };
-    } catch (error) {
-        const errorMessage = error.response?.data?.error || error.message;
-        return { success: false, message: errorMessage };
-    }
-}
+import { login, signup } from "../utils/networkmanager"
 
 //BELOW IS JUST A TEST PAGE TO SEE IF THE ABOVE WORKS PROPERLY
 const Signup = () => {
@@ -47,6 +12,15 @@ const Signup = () => {
         const result = await signup(email, username, password);
         if (result.success) {
             console.log("Sign up successful!");
+            const result2 = await login(email, password);
+            if(result2.success)
+            {
+                console.log("Sign in successful!");
+            }
+            else
+            {
+                console.error("Sign up failed:", result2.message);
+            }
         } else {
             console.error("Sign up failed:", result.message);
         }
