@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:5000/api';
 
 
 //THESE ARE ONLY TEMPORARY TESTS!!! WILL MAKE MORE RIGOROUS TESTS IN THE FUTURE

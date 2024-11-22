@@ -257,6 +257,7 @@ app.get("/api/account", authenticateToken, async (req, res) => {
     }
 });
 
+//TODO: SET UP A WAY FOR THINGS TO REMOVE THEMSELVES FROM TEMP STORAGE AFTER CERTAIN PERIOD OF TIME
 const temp_storage = {}; //This is for the PDF text and job descriptions
 
 app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), async (req, res) => {
@@ -342,7 +343,7 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
     });
 });
 
-app.listen(3000, "localhost", () => {
+app.listen(5000, "localhost", () => {
     console.log("Server started...");
 });
 
