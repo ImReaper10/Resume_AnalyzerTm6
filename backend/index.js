@@ -4,7 +4,7 @@ const express = require("express");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const sqlite3 = require("sqlite3").verbose();
-const {extractTextFromPdf} = require("./fileParserUtils");
+const {extractTextFromPdf, extractTextFromDocx} = require("./fileParserUtils");
 const app = express();
 const cors = require('cors');
 const multer = require('multer');
@@ -18,8 +18,8 @@ const upload = multer({
   });
 
 const validateFileType = async (fileBuffer) => {
-const type = await fileType.fromBuffer(fileBuffer);
-return type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    const type = await fileType.fromBuffer(fileBuffer);
+    return {valid: type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'), mime: type.mime};
 };
 
 const SECRET_FILE_PATH = path.join(__dirname, "jwt_secret.key");
@@ -197,7 +197,7 @@ app.post("/api/register", async (req, res) => {
 });
 
 app.post("/api/login", async (req, res) => {
-    const { email, password, keypairId } = req.body;
+    const { email, password, keypairId , keyForJWT} = req.body;
 
     if (!keypairId) {
         return res.status(400).json({ error: "Missing keypairId" });
@@ -233,7 +233,15 @@ app.post("/api/login", async (req, res) => {
             { expiresIn: JWT_EXPIRATION }
         );
 
-        res.status(200).json({ token });
+        let encryptedToken = crypto.publicEncrypt(
+            {
+                key: keyForJWT,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            },
+            token
+        ).toString('base64');
+
+        res.status(200).json({ token: encryptedToken });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Error during login: " + err.message });
@@ -260,6 +268,19 @@ app.get("/api/account", authenticateToken, async (req, res) => {
 //TODO: SET UP A WAY FOR THINGS TO REMOVE THEMSELVES FROM TEMP STORAGE AFTER CERTAIN PERIOD OF TIME
 const temp_storage = {}; //This is for the PDF text and job descriptions
 
+//Every minute check temp storage and remove older than 30 minute entries
+setInterval(() => {
+    let currentTime = Date.now();
+    for(item of Object.keys(temp_storage))
+    {
+        if(currentTime - temp_storage[item].uploadTime > 1800000)
+        {
+            delete temp_storage[item]
+        }
+    }
+    console.log(temp_storage);
+}, 60000);
+
 app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), async (req, res) => {
     try {
         const file = req.file;
@@ -279,20 +300,29 @@ app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), 
         }
 
         const isValidFileType = await validateFileType(file.buffer);
-        if (!isValidFileType) {
+        if (!isValidFileType.valid) {
             return res.status(400).json({
                 error: 'Invalid file type. Only PDF or DOCX files are allowed.',
                 status: 'error',
             });
         }
 
-        const extractedText = await extractTextFromPdf(file.buffer);
+        let extractedText = "";
+        if(isValidFileType.mime === "application/pdf")
+        {
+            extractedText = await extractTextFromPdf(file.buffer);
+        }
+        else
+        {
+            extractedText = await extractTextFromDocx(file.buffer);
+        }
 
         // Store extracted resume text associated with the user
         if (!temp_storage[req.user.email]) {
             temp_storage[req.user.email] = {};
         }
         temp_storage[req.user.email].resumeText = extractedText;
+        temp_storage[req.user.email].uploadTime = Date.now();
 
         res.status(200).json({
             message: 'Resume uploaded and text extracted successfully.',
@@ -336,6 +366,7 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
         temp_storage[req.user.email] = {};
     }
     temp_storage[req.user.email].jobDescription = cleanedDescription;
+    temp_storage[req.user.email].uploadTime = Date.now();
 
     res.status(200).json({
         message: 'Job description submitted and stored successfully.',

@@ -21,13 +21,22 @@ async function login(email, password) {
             })
         );
 
+        const keypair = forge.pki.rsa.generateKeyPair({ bits: 2048, e: 0x10001 }); //This second keypair is for safe transfer of jwt
+
         const response = await axios.post('http://localhost:5000/api/login', {
             email,
             password: encryptedPassword,
             keypairId,
+            keyForJWT: forge.pki.publicKeyToPem(keypair.publicKey)
         });
 
-        const { token } = response.data;
+        const token  = keypair.privateKey.decrypt(forge.util.decode64(response.data.token), 'RSA-OAEP', {
+            md: forge.md.sha1.create(),
+            mgf1: {
+                md: forge.md.sha1.create()
+            }
+        });
+
         localStorage.setItem("jwt", token);
         return { success: true, token };
     } catch (error) {
@@ -37,6 +46,11 @@ async function login(email, password) {
 }
 
 async function signup(email, username, password) {
+    let passCheck = checkSecurePassword(password);
+    if(!passCheck.valid)
+    {
+        return { success: false, message: passCheck.message };
+    }
     try {
         const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
         const { key: publicKey, keypairId } = publicKeyResponse.data;
@@ -191,4 +205,31 @@ async function jobDescriptionUpload(job_description) {
     }
 }
 
-export {login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload}
+function checkSecurePassword(password) {
+    const minLength = 8;
+    const hasUppercase = /[A-Z]/;
+    const hasLowercase = /[a-z]/;
+    const hasNumber = /[0-9]/;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
+
+    if (password.length < minLength) {
+        return { valid: false, message: "Password must be at least 8 characters long." };
+    }
+    if (!hasUppercase.test(password)) {
+        return { valid: false, message: "Password must include at least one uppercase letter." };
+    }
+    if (!hasLowercase.test(password)) {
+        return { valid: false, message: "Password must include at least one lowercase letter." };
+    }
+    if (!hasNumber.test(password)) {
+        return { valid: false, message: "Password must include at least one number." };
+    }
+    if (!hasSpecialChar.test(password)) {
+        return { valid: false, message: "Password must include at least one special character." };
+    }
+
+    return { valid: true, message: "Password is secure." };
+}
+
+
+export {login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, checkSecurePassword}
