@@ -1,60 +1,94 @@
 import React, { useState } from "react";
-import { resumeUpload, jobDescriptionUpload, getAccountInfo} from "../utils/networkmanager";
+import { resumeUpload, jobDescriptionUpload, getAccountInfo } from "../utils/networkmanager";
+import "../styling/ResumeUploadForm.css";
 
-//BELOW IS JUST A TEST PAGE TO SEE IF THE ABOVE WORKS PROPERLY
 const Upload = () => {
     const [jobDescription, setJobDesc] = useState("");
     const [file, setFile] = useState(null);
+    const [charCount, setCharCount] = useState(0);
+    const [message, setMessage] = useState("");
+    const [uploading, setUploading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setMessage("");
+
         if (!file) {
-            console.error("Please select a file.");
+            setMessage("Please select a resume file.");
             return;
         }
-        //I put this first, to make sure there is a valid JWT, just to prevent large amounts of extra data (like a whole PDF file) from being sent, if the JWT has expired or they are not signed in
-        let accountInfo = await getAccountInfo();
-        if(!accountInfo.success)
-        {
-            console.error("Not logged in");
-            return;
-        }
-        const result = await resumeUpload(file);
-        if (result.success) {
-            console.log("Resume upload successful!");
-            const result2 = await jobDescriptionUpload(jobDescription);
-            if (result2.success) {
-                console.log("Job description upload successful!");
+
+        try {
+            // Validate user authentication before proceeding
+            let accountInfo = await getAccountInfo();
+            if (!accountInfo.success) {
+                setMessage("Not logged in. Please sign in first.");
+                return;
             }
-            else
-            {
-                console.error("Upload failed:", result2.message);
+
+            setUploading(true);
+            const resumeResult = await resumeUpload(file);
+            if (resumeResult.success) {
+                const descResult = await jobDescriptionUpload(jobDescription);
+                if (descResult.success) {
+                    setMessage("Resume and job description uploaded successfully!");
+                } else {
+                    setMessage(`Job description upload failed: ${descResult.message}`);
+                }
+            } else {
+                setMessage(`Resume upload failed: ${resumeResult.message}`);
             }
-        } else {
-            console.error("Upload failed:", result.message);
+        } catch (error) {
+            setMessage(`Unexpected error: ${error.message}`);
+        } finally {
+            setUploading(false);
         }
     };
 
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+        setMessage("");
+    };
+
+    const handleDescriptionChange = (e) => {
+        const input = e.target.value;
+        setJobDesc(input);
+        setCharCount(input.length);
+    };
+
     return (
-        <div>
-            <h2>Upload</h2>
+        <div className="form-container">
+            <h2>Upload Your Resume and Job Description</h2>
             <form onSubmit={handleSubmit}>
-                <div>
-                    <label>Resume PDF: </label>
+                <div className="form-field">
+                    <label htmlFor="resume">Select Resume (PDF/DOCX):</label>
                     <input
                         type="file"
-                        onChange={(e) => setFile(e.target.files[0])}
+                        id="resume"
+                        accept=".pdf,.docx"
+                        onChange={handleFileChange}
+                        disabled={uploading}
                     />
                 </div>
-                <label>Job Description: </label>
-                <div>
+                <div className="form-field">
+                    <label htmlFor="description">Job Description:</label>
                     <textarea
+                        id="description"
+                        rows="5"
                         value={jobDescription}
-                        onChange={(e) => setJobDesc(e.target.value)}
+                        onChange={handleDescriptionChange}
+                        placeholder="Enter the job description..."
+                        disabled={uploading}
                     />
+                    <p className="character-count">
+                        {charCount} characters
+                    </p>
                 </div>
-                <button type="submit">Upload</button>
+                <button type="submit" disabled={uploading}>
+                    {uploading ? "Uploading..." : "Upload"}
+                </button>
             </form>
+            {message && <p className="submission-message">{message}</p>}
         </div>
     );
 };
