@@ -273,7 +273,7 @@ const temp_storage = {}; //This is for the PDF text and job descriptions
 //Every minute check temp storage and remove older than 30 minute entries
 setInterval(() => {
     let currentTime = Date.now();
-    for(item of Object.keys(temp_storage))
+    for(let item of Object.keys(temp_storage))
     {
         if(currentTime - temp_storage[item].uploadTime > 1800000)
         {

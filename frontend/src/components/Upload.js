@@ -28,7 +28,7 @@ const Upload = () => {
             }
             else
             {
-                console.error("Upload failed:", result.message);
+                console.error("Upload failed:", result2.message);
             }
         } else {
             console.error("Upload failed:", result.message);

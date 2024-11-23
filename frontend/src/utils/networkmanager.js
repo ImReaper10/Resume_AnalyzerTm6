@@ -2,6 +2,10 @@ import axios from 'axios';
 import forge from 'node-forge';
 
 async function login(email, password) {
+    if(useMock)
+    {
+        return await mockLogin(email, password);
+    }
     try {
         const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
         const { key: publicKey, keypairId } = publicKeyResponse.data;
@@ -46,6 +50,10 @@ async function login(email, password) {
 }
 
 async function signup(email, username, password) {
+    if(useMock)
+    {
+        return await mockSignup(email, username, password);
+    }
     let passCheck = checkSecurePassword(password);
     if(!passCheck.valid)
     {
@@ -85,8 +93,12 @@ async function signup(email, username, password) {
 }
 
 async function getAccountInfo() {
-    let jwt = "";
-    if(jwt = localStorage.getItem("jwt"))
+    if(useMock)
+    {
+        return await mockGetAccountInfo();
+    }
+    let jwt = localStorage.getItem("jwt");
+    if(jwt)
     {
         try {
             const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
@@ -113,7 +125,7 @@ async function getAccountInfo() {
                 }
             });
 
-            return { success: true };
+            return { success: true, info: response.data};
         } catch (error) {
             const errorMessage = error.response?.data?.error || error.message;
             return { success: false, message: errorMessage };
@@ -126,6 +138,10 @@ async function getAccountInfo() {
 }
 
 async function resumeUpload(resume) {
+    if(useMock)
+    {
+        return await mockResumeUpload(resume);
+    }
     try {
         const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
             const { key: publicKey, keypairId } = publicKeyResponse.data;
@@ -163,6 +179,10 @@ async function resumeUpload(resume) {
 }
 
 async function jobDescriptionUpload(job_description) {
+    if(useMock)
+    {
+        return await mockJobDescriptionUpload(job_description);
+    }
     try {
         const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
             const { key: publicKey, keypairId } = publicKeyResponse.data;
@@ -221,5 +241,140 @@ function checkSecurePassword(password) {
     return { valid: true, message: "Password is secure." };
 }
 
+let useMock = false;
+if(!localStorage.getItem("users"))
+{
+    localStorage.setItem("users", JSON.stringify([{email: "mock@mock.com", user: "Mock", pass: "mockPass#"}]));
+}
+let mockUsers = JSON.parse(localStorage.getItem("users"));
+let mockData = {};
 
-export {login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, checkSecurePassword}
+setInterval(() => {
+    let currentTime = Date.now();
+    for(let item of Object.keys(mockData))
+    {
+        if(currentTime - mockData[item].uploadTime > 1800000)
+        {
+            delete mockData[item]
+        }
+    }
+}, 60000);
+
+function setMocking(mocking)
+{
+    useMock = mocking;
+}
+
+async function mockLogin(email, password) {
+    for(let user of mockUsers)
+    {
+        if(email.toLowerCase() === user.email.toLowerCase())
+        {
+            if(password === user.pass)
+            {
+                let jwt = Math.floor(10000*Math.random()).toString();
+                localStorage.setItem("jwt", jwt);
+                user.jwt = jwt;
+                localStorage.setItem("users", JSON.stringify(mockUsers));
+                return { success: true, token: jwt};
+            }
+            else
+            {
+                return { success: false, message: "Invalid email or password"};
+            }
+        }
+    }
+    return { success: false, message: "Invalid email or password"};
+}
+
+async function mockSignup(email, username, password) {
+    for(let user of mockUsers)
+    {
+        if(email.toLowerCase() === user.email.toLowerCase() || username.toLowerCase() === user.user.toLowerCase())
+        {
+            return { success: false, message: "Email or username already exists"};
+        }
+    }
+
+    let passcheck = checkSecurePassword(password);
+
+    if(!passcheck.valid)
+    {
+        return { success: false, message: passcheck.message};
+    }
+
+    mockUsers.push({email, user:username, pass:password});
+    localStorage.setItem("users", JSON.stringify(mockUsers));
+
+    return { success: true, message: "User registered"};
+}
+
+async function mockGetAccountInfo()
+{
+    let jwt = localStorage.getItem("jwt");
+    if(jwt)
+    {
+        for(let user of mockUsers)
+        {
+            if(user.jwt === jwt)
+            {
+                return { success: true, info: {username: user.user, email: user.email} };
+            }
+        }
+    }
+    return { success: false, message: "Not logged in" };
+}
+
+async function mockResumeUpload(resume) {
+    let accountInfo = await mockGetAccountInfo();
+
+    if(!accountInfo.success)
+    {
+        return accountInfo;
+    }
+
+    const allowedFileTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    const maxFileSize = 2 * 1024 * 1024;
+
+    if (!allowedFileTypes.includes(resume.type)) {
+        return {success: false, message: "Invalid file type. Only PDF or DOCX files are allowed."};
+    }
+
+    if (resume.size > maxFileSize) {
+        return {success: false, message: "File size exceeds the limit of 2MB."};
+    }
+
+    if(!mockData[accountInfo.info.email])
+    {
+        mockData[accountInfo.info.email] = {};
+    }
+    mockData[accountInfo.info.email].resumeText = "Mock resume text";
+    mockData[accountInfo.info.email].uploadTime = Date.now();
+
+    return { success: true };
+}
+
+async function mockJobDescriptionUpload(job_description) {
+    let accountInfo = await mockGetAccountInfo();
+
+    if(!accountInfo.success)
+    {
+        return accountInfo;
+    }
+
+    if (job_description.length > 5000) {
+        console.log("hello")
+        return {success: false, message: "Job description exceeds character limit."};
+    }
+
+    if(!mockData[accountInfo.info.email])
+    {
+        mockData[accountInfo.info.email] = {};
+    }
+    mockData[accountInfo.info.email].jobDescription = job_description.trim();
+    mockData[accountInfo.info.email].uploadTime = Date.now();
+
+    return { success: true };
+}
+
+export {login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, checkSecurePassword, setMocking}
