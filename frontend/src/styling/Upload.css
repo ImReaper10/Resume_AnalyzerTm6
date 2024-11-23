@@ -2,7 +2,8 @@
 .form-container {
   max-width: 600px;
   margin: auto;
-  padding: 20px;
+  padding: 40px;
+  padding-right: 60px;
   background-color: #f4f4f4;
   border-radius: 8px;
 }
@@ -19,13 +20,14 @@ textarea {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  resize: vertical;
 }
 
 /* Style for the submit button */
 button {
   padding: 10px 20px;
   border: none;
-  background-color: #4CAF50;
+  background-color: #1b00b3;
   color: white;
   font-size: 16px;
   cursor: pointer;

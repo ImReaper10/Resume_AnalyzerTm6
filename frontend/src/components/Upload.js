@@ -2,6 +2,24 @@ import React, { useState } from "react";
 import { resumeUpload, jobDescriptionUpload, getAccountInfo } from "../utils/networkmanager";
 import "../styling/Upload.css";
 
+function checkFileValidity(file)
+{
+
+    const allowedFileTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    const maxFileSize = 2 * 1024 * 1024;
+
+    if (!allowedFileTypes.includes(file.type)) {
+        return {success: false, message: "Invalid file type. Only PDF or DOCX files are allowed."};
+    }
+
+    if (file.size > maxFileSize) {
+        return {success: false, message: "File size exceeds the limit of 2MB."};
+    }
+
+    return {success: true};
+
+}
+
 const Upload = () => {
     const [jobDescription, setJobDesc] = useState("");
     const [file, setFile] = useState(null);
@@ -69,6 +87,9 @@ const Upload = () => {
                         onChange={handleFileChange}
                         disabled={uploading}
                     />
+                    {file && !checkFileValidity(file).success &&
+                        <em style={{color:"red"}}>{checkFileValidity(file).message}</em>
+                    }
                 </div>
                 <div className="form-field">
                     <label htmlFor="description">Job Description:</label>
@@ -80,11 +101,11 @@ const Upload = () => {
                         placeholder="Enter the job description..."
                         disabled={uploading}
                     />
-                    <p className="character-count">
+                    <p className="character-count" style={{color:`${jobDescription.length>5000?"red":"black"}`}}>
                         {charCount} characters
                     </p>
                 </div>
-                <button type="submit" disabled={uploading}>
+                <button type="submit" disabled={uploading || !jobDescription.trim() || jobDescription.length>5000 || !file || !checkFileValidity(file).success}>
                     {uploading ? "Uploading..." : "Upload"}
                 </button>
             </form>

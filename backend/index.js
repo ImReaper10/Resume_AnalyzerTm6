@@ -233,8 +233,6 @@ app.post("/api/login", async (req, res) => {
             { expiresIn: JWT_EXPIRATION }
         );
 
-        console.log(keyForJWT);
-        console.log(token);
         let encryptedToken = crypto.publicEncrypt(
             {
                 key: keyForJWT,
