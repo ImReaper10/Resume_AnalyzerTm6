@@ -126,11 +126,6 @@ async function getAccountInfo() {
 }
 
 async function resumeUpload(resume) {
-    let accountInfo = await getAccountInfo();
-    if(!accountInfo.success)
-    {
-        return accountInfo;
-    }
     try {
         const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
             const { key: publicKey, keypairId } = publicKeyResponse.data;
@@ -168,11 +163,6 @@ async function resumeUpload(resume) {
 }
 
 async function jobDescriptionUpload(job_description) {
-    let accountInfo = await getAccountInfo();
-    if(!accountInfo.success)
-    {
-        return accountInfo;
-    }
     try {
         const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
             const { key: publicKey, keypairId } = publicKeyResponse.data;

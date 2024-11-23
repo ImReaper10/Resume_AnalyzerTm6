@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { resumeUpload, jobDescriptionUpload } from "../utils/networkmanager";
+import { resumeUpload, jobDescriptionUpload, getAccountInfo} from "../utils/networkmanager";
 
 //BELOW IS JUST A TEST PAGE TO SEE IF THE ABOVE WORKS PROPERLY
 const Upload = () => {
@@ -10,6 +10,13 @@ const Upload = () => {
         e.preventDefault();
         if (!file) {
             console.error("Please select a file.");
+            return;
+        }
+        //I put this first, to make sure there is a valid JWT, just to prevent large amounts of extra data (like a whole PDF file) from being sent, if the JWT has expired or they are not signed in
+        let accountInfo = await getAccountInfo();
+        if(!accountInfo.success)
+        {
+            console.error("Not logged in");
             return;
         }
         const result = await resumeUpload(file);

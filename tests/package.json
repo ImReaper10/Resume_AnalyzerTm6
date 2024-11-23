@@ -12,5 +12,11 @@
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^7.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "crypto": "^1.0.1",
+    "form-data": "^4.0.1",
+    "tests": "file:"
   }
 }

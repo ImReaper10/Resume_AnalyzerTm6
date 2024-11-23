@@ -19,7 +19,7 @@ const upload = multer({
 
 const validateFileType = async (fileBuffer) => {
     const type = await fileType.fromBuffer(fileBuffer);
-    return {valid: type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'), mime: type.mime};
+    return {valid: type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'), mime: type?type.mime:undefined};
 };
 
 const SECRET_FILE_PATH = path.join(__dirname, "jwt_secret.key");
@@ -233,6 +233,8 @@ app.post("/api/login", async (req, res) => {
             { expiresIn: JWT_EXPIRATION }
         );
 
+        console.log(keyForJWT);
+        console.log(token);
         let encryptedToken = crypto.publicEncrypt(
             {
                 key: keyForJWT,
@@ -278,7 +280,6 @@ setInterval(() => {
             delete temp_storage[item]
         }
     }
-    console.log(temp_storage);
 }, 60000);
 
 app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), async (req, res) => {
