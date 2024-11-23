@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { resumeUpload, jobDescriptionUpload, getAccountInfo } from "../utils/networkmanager";
-import "../styling/ResumeUploadForm.css";
+import "../styling/Upload.css";
 
 const Upload = () => {
     const [jobDescription, setJobDesc] = useState("");
