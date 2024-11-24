@@ -235,6 +235,11 @@ describe('API Tests', () => {
                 name: "Upload large DOCX",
                 filePath: path.join(__dirname, './test-files/large-docx.docx'),
                 expectedStatus: 400,
+            },
+            {
+                name: "No file provided",
+                filePath: "",
+                expectedStatus: 500,
             }
         ];
 
@@ -242,9 +247,12 @@ describe('API Tests', () => {
             it(testCase.name, async () => {
                 await accountLoggedIn;
                 let encJWT = await encryptPassword(jwt);
-                const fileBuffer = fs.readFileSync(testCase.filePath);
+                const fileBuffer = testCase.filePath?fs.readFileSync(testCase.filePath):"";
                 const formData = new FormData();
-                formData.append('resume_file', fileBuffer, path.basename(testCase.filePath));
+                if(testCase.filePath)
+                {
+                    formData.append('resume_file', fileBuffer, path.basename(testCase.filePath));
+                }
 
                 try {
                     const response = await axios.post(`${API_URL}/resume-upload`, formData, {
@@ -285,6 +293,31 @@ describe('API Tests', () => {
                 },
                 expectedStatus: 400,
             },
+            {
+                name: "Submit no job description",
+                endpoint: `${API_URL}/job-description`,
+                method: "post",
+                data: {},
+                expectedStatus: 400,
+            },
+            {
+                name: "Submit job description with no text",
+                endpoint: `${API_URL}/job-description`,
+                method: "post",
+                data: {
+                    job_description: ""
+                },
+                expectedStatus: 400,
+            },
+            {
+                name: "Submit job description with not a string",
+                endpoint: `${API_URL}/job-description`,
+                method: "post",
+                data: {
+                    job_description: 2
+                },
+                expectedStatus: 500,
+            }
         ];
 
         jobDescriptionTests.forEach(testCase => {
@@ -306,6 +339,60 @@ describe('API Tests', () => {
                     }
                 }
             });
+        });
+    });
+
+    describe('Uploaded Data Check', () => {
+        test("Check uploaded data", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            const response = await axios["get"](`${API_URL}/currently-uploaded-data`, {
+                headers: {
+                    authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                },
+            });
+            expect(response.status).toBe(200);
+            expect(response.data.data.resumeText).toBe("Docx file worked");
+            expect(response.data.data.jobDescription).toBe("This is a valid job description for testing.");
+
+        });
+
+        test("Delete uploaded data", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            const response = await axios["delete"](`${API_URL}/currently-uploaded-data`, {
+                headers: {
+                    authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                },
+            });
+            expect(response.status).toBe(200);
+            expect(response.data.message).toBe("Data deleted");
+
+        });
+
+        test("Delete no data", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            const response = await axios["delete"](`${API_URL}/currently-uploaded-data`, {
+                headers: {
+                    authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                },
+            });
+            expect(response.status).toBe(200);
+            expect(response.data.message).toBe("No data to delete");
+
+        });
+
+        test("Check if data was deleted", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            const response = await axios["get"](`${API_URL}/currently-uploaded-data`, {
+                headers: {
+                    authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                },
+            });
+            expect(response.status).toBe(200);
+            expect(Object.keys(response.data.data).length).toBe(0);
         });
     });
 });
