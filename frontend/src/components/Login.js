@@ -48,7 +48,6 @@ const Login = () => {
                         type="password"
                         value={password}
                         placeholder="Password"
-                        alt="login button"
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
