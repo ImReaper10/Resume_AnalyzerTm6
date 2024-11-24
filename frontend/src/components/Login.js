@@ -1,10 +1,21 @@
-import React, { useState } from "react";
-import { login } from "../utils/networkmanager";
+import React, { useEffect, useState } from "react";
+import { login , getAccountInfo} from "../utils/networkmanager";
+import { useNavigate } from "react-router-dom";
 
 //BELOW IS JUST A TEST PAGE TO SEE IF THE ABOVE WORKS PROPERLY
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+
+    React.useEffect(() => {
+        getAccountInfo().then((account) => {
+            if(account.success)
+            {
+                navigate("/upload");
+            }
+        });
+    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -12,6 +23,7 @@ const Login = () => {
         if (result.success) {
             console.log("Login successful! Token:", result.token);
             localStorage.setItem("jwt", result.token);
+            navigate("/upload");
         } else {
             console.error("Login failed:", result.message);
         }

@@ -56,6 +56,7 @@ const Upload = () => {
             if (resumeResult.success) {
                 const descResult = await jobDescriptionUpload(jobDescription);
                 if (descResult.success) {
+                    navigate("/dashboard")
                     setMessage("Resume and job description uploaded successfully!");
                 } else {
                     setMessage(`Job description upload failed: ${descResult.message}`);

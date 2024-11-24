@@ -20,6 +20,7 @@ function DashboardLayout({ children }) {
         <Link to="/dashboard/suggestions" className="link">
           Suggestions
         </Link>
+        <button onClick={() => {navigate("/upload")}}>Upload another</button>
       </nav>
       <main className="content">{children}</main>
     </div>
