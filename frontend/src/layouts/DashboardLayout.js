@@ -5,7 +5,7 @@ import { redirectIfNotLoggedIn , getUploadedData, deleteUploadedData} from '../u
 
 function DashboardLayout({ children }) {
   let navigate = useNavigate();
-  
+
   React.useEffect(() => {
     redirectIfNotLoggedIn(navigate);
     getUploadedData().then((data) => {
@@ -30,6 +30,9 @@ function DashboardLayout({ children }) {
         </Link>
         <Link to="/dashboard/suggestions" className="link">
           Suggestions
+        </Link>
+        <Link to="/dashboard/view" className="link">
+          View uploaded data
         </Link>
         <button onClick={async () => {await deleteUploadedData(); navigate("/upload")}}>Upload another</button>
       </nav>

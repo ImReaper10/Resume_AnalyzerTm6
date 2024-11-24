@@ -9,6 +9,7 @@ import MatchedKeywords from "./components/MatchedKeywords";
 import ImprovementSuggestions from "./components/ImprovementSuggestions";
 import { getAccountInfo, getBackendStatus } from "./utils/networkmanager";
 import "./App.css"
+import View from "./components/View";
 
 
 function RouteChangeDetector({usernameSetter}) {
@@ -73,6 +74,7 @@ const App = () => {
                     <Route path="fit-score" element={<FitScoreCard />} />
                     <Route path="keywords" element={<MatchedKeywords />} />
                     <Route path="suggestions" element={<ImprovementSuggestions />} />
+                    <Route path="view" element={<View />} />
                     <Route path="*" element={<Navigate to="fit-score" />} />
                   </Routes>
                 </DashboardLayout>
