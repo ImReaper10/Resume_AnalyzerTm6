@@ -40,16 +40,88 @@ class MockLocalStorage {
 
 Object.defineProperty(window, "localStorage", { value: new MockLocalStorage() });
 
+const testEmail = "testEmail@test.com";
+const testPass = "testPass123#";
+const testUsername = "Test User";
+
+test('Signing up', async () => {
+  setMocking(true);
+  render(<App />);
+  userEvent.click(screen.getAllByText("Sign Up")[0]);
+  await new Promise((res) => {
+    setTimeout(() => {
+      res()
+    }, 500);
+  });
+  const emailInput = screen.getByPlaceholderText("Email");
+  const passwordInput = screen.getByPlaceholderText("Password");
+  const confirmPasswordInput = screen.getByPlaceholderText("Confirm password");
+  const signUpButton = screen.getAllByText("Sign Up")[1];
+  userEvent.type(emailInput, "mock@mock.com");
+  userEvent.type(screen.getByPlaceholderText("Username"), testUsername);
+  userEvent.type(passwordInput, testPass);
+  userEvent.type(confirmPasswordInput, testPass + "x");
+  screen.getByText("Passwords do not match");
+  userEvent.clear(confirmPasswordInput);
+  userEvent.type(confirmPasswordInput, testPass);
+  try
+  {
+    screen.getByText("Passwords do not match");
+    fail("Should not have got a: \"Passwords do not match\"");
+  }
+  catch(e) {}
+  await new Promise((res) => {
+    setTimeout(() => {
+      res()
+    }, 500);
+  });
+  userEvent.click(signUpButton);
+  await new Promise((res) => {
+    setTimeout(() => {
+      res()
+    }, 500);
+  });
+  screen.getByText("Email or username already exists");
+  userEvent.clear(emailInput);
+  userEvent.type(emailInput, testEmail);
+  userEvent.click(signUpButton);
+  await new Promise((res) => {
+    setTimeout(() => {
+      res()
+    }, 500);
+  });
+  screen.getByText("Sign up successful! Please log in with your new credentials.");
+});
+
 test('Logging in', async () => {
   //localStorage.clear();
-  setMocking(true);
   render(<App />);
   const emailInput = screen.getByPlaceholderText("Email");
   const passwordInput = screen.getByPlaceholderText("Password");
   userEvent.type(emailInput, "mock@mock.com");
-  userEvent.type(passwordInput, "mockPass#");
+  userEvent.type(passwordInput, "mockPass");
   const loginButton = screen.getAllByText("Login");
   userEvent.click(loginButton[1])
+  await new Promise((res) => {
+    setTimeout(() => {
+      res()
+    }, 500);
+  });
+  screen.getByText("Invalid email or password");
+  userEvent.clear(emailInput);
+  userEvent.clear(passwordInput);
+  userEvent.type(emailInput, "mmock@mock.com");
+  userEvent.type(passwordInput, "mockPass#");
+  userEvent.click(loginButton[1]);
+  await new Promise((res) => {
+    setTimeout(() => {
+      res()
+    }, 500);
+  });
+  screen.getByText("Invalid email or password");
+  userEvent.clear(emailInput);
+  userEvent.type(emailInput, "mock@mock.com");
+  userEvent.click(loginButton[1]);
   await new Promise((res) => {
     setTimeout(() => {
       expect(!!localStorage.getItem("jwt")).toEqual(true)
@@ -166,4 +238,21 @@ test('Signing out', async () => {
       res();
     },500);
   });
+});
+
+test('Login with different account', async () => {
+  render(<App />);
+  const emailInput = screen.getByPlaceholderText("Email");
+  const passwordInput = screen.getByPlaceholderText("Password");
+  userEvent.type(emailInput, testEmail);
+  userEvent.type(passwordInput, testPass);
+  const loginButton = screen.getAllByText("Login");
+  userEvent.click(loginButton[1])
+  await new Promise((res) => {
+    setTimeout(() => {
+      expect(!!localStorage.getItem("jwt")).toEqual(true)
+      res()
+    }, 1000);
+  });
+  expect(document.body.getElementsByClassName("username-placeholder")[0].innerHTML).toEqual(testUsername)
 });
