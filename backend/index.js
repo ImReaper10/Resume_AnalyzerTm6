@@ -107,6 +107,18 @@ function checkForUser(email, username) {
     });
 }
 
+function getUserById(id) {
+    return new Promise((resolve, reject) => {
+        const sql = `SELECT * FROM users WHERE id = ?`;
+        db.get(sql, [id], (err, row) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(row);
+        });
+    });
+}
+
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -191,7 +203,7 @@ app.post("/api/register", async (req, res) => {
         await registerUser(email, username, hashedPassword, salt);
         res.status(201).json({ message: "User registered" });
     } catch (err) {
-        console.error(err);
+        //console.error(err);
         res.status(500).json({ error: "There was an error registering: " + err.message });
     }
 });
@@ -227,8 +239,10 @@ app.post("/api/login", async (req, res) => {
             return res.status(400).json({ error: "Invalid email or password" });
         }
 
+        //console.log(user);
+
         const token = jwt.sign(
-            { email: user.email, username: user.username },
+            { id: user.id },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRATION }
         );
@@ -243,7 +257,7 @@ app.post("/api/login", async (req, res) => {
 
         res.status(200).json({ token: encryptedToken });
     } catch (err) {
-        console.error(err);
+        //console.error(err);
         res.status(500).json({ error: "Error during login: " + err.message });
     }
 });
@@ -328,7 +342,7 @@ app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), 
             status: 'success',
         });
     } catch (error) {
-        console.error('Error processing resume upload:', error);
+        //console.error('Error processing resume upload:', error);
         res.status(500).json({
             error: 'An error occurred while processing the file.',
             status: 'error',
@@ -387,11 +401,12 @@ function authenticateToken(req, res, next) {
             return res.status(401).json({ error: "Access denied. No token provided." });
         }
 
-        jwt.verify(token, JWT_SECRET, (err, user) => {
+        jwt.verify(token, JWT_SECRET, async (err, user) => {
             if (err) {
                 return res.status(403).json({ error: "Invalid or expired token." });
             }
-            req.user = user;
+            req.user = await getUserById(user.id);
+            //console.log(req.user);
             next();
         });
     }
