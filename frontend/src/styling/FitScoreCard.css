@@ -1,0 +1,35 @@
+/* FitScoreCard.css */
+
+.card {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    text-align: center;
+    background-color: #fff;
+  }
+  
+  .progress-container {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(#4caf50 85%, #ccc 85%);
+    margin: 20px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .progress {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .score {
+    font-size: 24px;
+    font-weight: bold;
+  }  
