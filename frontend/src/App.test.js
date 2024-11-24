@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
+import { setMocking } from './utils/networkmanager.js';
 
-test('renders learn react link', () => {
+test('Logging in', () => {
+  localStorage.clear();
+  setMocking(true);
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const emailInput = screen.getByPlaceholderText("Email");
+  const passwordInput = screen.getByPlaceholderText("Password");
+  emailInput.value = "mock@mock.com";
+  passwordInput.value = "mockPass#";
+  const loginButton = screen.getByAltText("login button");
+  loginButton.click();
 });

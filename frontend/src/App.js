@@ -7,7 +7,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import FitScoreCard from "./components/FitScoreCard";
 import MatchedKeywords from "./components/MatchedKeywords";
 import ImprovementSuggestions from "./components/ImprovementSuggestions";
-import { getAccountInfo, getBackendStatus } from "./utils/networkmanager";
+import { getAccountInfo, getBackendStatus } from "./utils/networkmanager.js";
 import "./App.css"
 import View from "./components/View";
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { login , getAccountInfo} from "../utils/networkmanager";
+import { login , getAccountInfo} from "../utils/networkmanager.js";
 import { useNavigate } from "react-router-dom";
 
 //BELOW IS JUST A TEST PAGE TO SEE IF THE ABOVE WORKS PROPERLY
@@ -38,6 +38,7 @@ const Login = () => {
                     <input
                         type="email"
                         value={email}
+                        placeholder="Email"
                         onChange={(e) => setEmail(e.target.value)}
                     />
                 </div>
@@ -46,6 +47,8 @@ const Login = () => {
                     <input
                         type="password"
                         value={password}
+                        placeholder="Password"
+                        alt="login button"
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>

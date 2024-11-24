@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '../styling/View.css'; 
-import { getUploadedData } from '../utils/networkmanager';
+import { getUploadedData } from '../utils/networkmanager.js';
 
 function View() {
     const [data, setData] = useState({});

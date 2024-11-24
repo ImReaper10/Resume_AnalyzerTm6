@@ -339,7 +339,7 @@ function checkSecurePassword(password) {
     return { valid: true, message: "Password is secure." };
 }
 
-let useMock = false;
+let useMock = localStorage.getItem("useMock") === "yes";
 if(!localStorage.getItem("users"))
 {
     localStorage.setItem("users", JSON.stringify([{email: "mock@mock.com", user: "Mock", pass: "mockPass#"}]));
@@ -366,6 +366,7 @@ setInterval(() => {
 function setMocking(mocking)
 {
     useMock = mocking;
+    localStorage.setItem("useMock", mocking?"yes":"no")
 }
 
 async function mockLogin(email, password) {

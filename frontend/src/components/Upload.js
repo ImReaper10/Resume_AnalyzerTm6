@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { resumeUpload, jobDescriptionUpload, getAccountInfo, getUploadedData } from "../utils/networkmanager";
+import { resumeUpload, jobDescriptionUpload, getAccountInfo, getUploadedData } from "../utils/networkmanager.js";
 import "../styling/Upload.css";
 import { useNavigate } from 'react-router-dom';
-import { redirectIfNotLoggedIn } from '../utils/networkmanager';
+import { redirectIfNotLoggedIn } from '../utils/networkmanager.js';
 
 function checkFileValidity(file)
 {

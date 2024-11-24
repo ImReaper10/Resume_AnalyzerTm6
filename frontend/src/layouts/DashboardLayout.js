@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styling/DashboardLayout.css'; 
-import { redirectIfNotLoggedIn , getUploadedData, deleteUploadedData} from '../utils/networkmanager';
+import { redirectIfNotLoggedIn , getUploadedData, deleteUploadedData} from '../utils/networkmanager.js';
 
 function DashboardLayout({ children }) {
   let navigate = useNavigate();

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { login, signup } from "../utils/networkmanager"
+import { login, signup } from "../utils/networkmanager.js"
 
 //BELOW IS JUST A TEST PAGE TO SEE IF THE ABOVE WORKS PROPERLY
 const Signup = () => {
