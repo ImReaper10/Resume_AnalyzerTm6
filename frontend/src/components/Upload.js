@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { resumeUpload, jobDescriptionUpload, getAccountInfo } from "../utils/networkmanager";
+import { resumeUpload, jobDescriptionUpload, getAccountInfo, getUploadedData } from "../utils/networkmanager";
 import "../styling/Upload.css";
 import { useNavigate } from 'react-router-dom';
 import { redirectIfNotLoggedIn } from '../utils/networkmanager';
@@ -32,6 +32,15 @@ const Upload = () => {
 
     React.useEffect(() => {
         redirectIfNotLoggedIn(navigate);
+        getUploadedData().then((data) => {
+            if(data.success)
+            {
+                if(Object.keys(data.data).length !== 0)
+                {
+                    navigate("/dashboard");
+                }
+            }
+        });
     }, [navigate]);
 
     const handleSubmit = async (e) => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
@@ -7,7 +7,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import FitScoreCard from "./components/FitScoreCard";
 import MatchedKeywords from "./components/MatchedKeywords";
 import ImprovementSuggestions from "./components/ImprovementSuggestions";
-import { getAccountInfo } from "./utils/networkmanager";
+import { getAccountInfo, getBackendStatus } from "./utils/networkmanager";
 import "./App.css"
 
 
@@ -24,7 +24,7 @@ function RouteChangeDetector({usernameSetter}) {
       {
         usernameSetter("");
       }
-  });
+    });
   }, [location]);
 
   return null;
@@ -32,6 +32,17 @@ function RouteChangeDetector({usernameSetter}) {
 
 const App = () => {
   const [username, setUsername] = React.useState("");
+  const [backendStatus, setStatus] = React.useState(true);
+
+  useEffect(() => {
+    getBackendStatus().then((status) => {
+      if(!status.success)
+      {
+        setStatus(false);
+        return;
+      }
+    });
+  }, []);
 
   return (
     <div className="main-container">
@@ -44,6 +55,7 @@ const App = () => {
           </div>
         }
       </header>
+      {backendStatus &&
       <main>
         <Router>
           <RouteChangeDetector usernameSetter={setUsername} />
@@ -70,7 +82,10 @@ const App = () => {
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
-      </main>
+      </main>}
+      {!backendStatus &&
+        <h1>Unfortunatly we were unable to reach our backend, please try again later...</h1>
+      }
     </div>
   );
 };

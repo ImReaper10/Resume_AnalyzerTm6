@@ -279,7 +279,31 @@ app.get("/api/account", authenticateToken, async (req, res) => {
     }
 });
 
-//TODO: SET UP A WAY FOR THINGS TO REMOVE THEMSELVES FROM TEMP STORAGE AFTER CERTAIN PERIOD OF TIME
+app.get("/api/currently-uploaded-data", authenticateToken, async (req, res) => {
+    let current_data = temp_storage[req.user.email];
+    if(current_data)
+    {
+        res.status(200).json({data: current_data});
+    }
+    else
+    {
+        res.status(200).json({data: {}}); //For now I am making it send an empty object, but we may end up wanting different behavior
+    }
+});
+
+app.delete("/api/currently-uploaded-data", authenticateToken, async (req, res) => {
+    let current_data = temp_storage[req.user.email];
+    if(current_data)
+    {
+        delete temp_storage[req.user.email];
+        res.status(200).json({message: "Data deleted"});
+    }
+    else
+    {
+        res.status(200).json({message: "No data to delete"});
+    }
+});
+
 const temp_storage = {}; //This is for the PDF text and job descriptions
 
 //Every minute check temp storage and remove older than 30 minute entries
@@ -385,6 +409,10 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
         message: 'Job description submitted and stored successfully.',
         status: 'success',
     });
+});
+
+app.get('/api/status', (req, res) => {
+    res.status(200).json({message: "Up and running!"});
 });
 
 app.listen(5000, "localhost", () => {
