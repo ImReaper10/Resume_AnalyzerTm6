@@ -1,5 +1,5 @@
 import React from 'react';
-import './ImprovementSuggestions.css'; 
+import '../styling/ImprovementSuggestions.css'; 
 
 function ImprovementSuggestions() {
   const suggestions = [

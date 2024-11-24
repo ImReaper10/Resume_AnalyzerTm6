@@ -215,6 +215,15 @@ async function jobDescriptionUpload(job_description) {
     }
 }
 
+async function redirectIfNotLoggedIn(navigate)
+{
+    let loggedIn = (await getAccountInfo()).success;
+    if(!loggedIn)
+    {
+        navigate("/");
+    }
+}
+
 function checkSecurePassword(password) {
     const minLength = 8;
     const hasUppercase = /[A-Z]/;
@@ -377,4 +386,4 @@ async function mockJobDescriptionUpload(job_description) {
     return { success: true };
 }
 
-export {login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, checkSecurePassword, setMocking}
+export {login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, redirectIfNotLoggedIn, checkSecurePassword, setMocking}

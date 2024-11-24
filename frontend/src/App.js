@@ -7,7 +7,6 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import FitScoreCard from "./components/FitScoreCard";
 import MatchedKeywords from "./components/MatchedKeywords";
 import ImprovementSuggestions from "./components/ImprovementSuggestions";
-import PrivateRoute from "./components/PrivateRoute";
 
 const App = () => {
   return (
@@ -22,16 +21,14 @@ const App = () => {
         <Route
           path="/dashboard/*"
           element={
-            <PrivateRoute>
-              <DashboardLayout>
-                <Routes>
-                  <Route path="fit-score" element={<FitScoreCard />} />
-                  <Route path="keywords" element={<MatchedKeywords />} />
-                  <Route path="suggestions" element={<ImprovementSuggestions />} />
-                  <Route path="*" element={<Navigate to="fit-score" />} />
-                </Routes>
-              </DashboardLayout>
-            </PrivateRoute>
+            <DashboardLayout>
+              <Routes>
+                <Route path="fit-score" element={<FitScoreCard />} />
+                <Route path="keywords" element={<MatchedKeywords />} />
+                <Route path="suggestions" element={<ImprovementSuggestions />} />
+                <Route path="*" element={<Navigate to="fit-score" />} />
+              </Routes>
+            </DashboardLayout>
           }
         />
 

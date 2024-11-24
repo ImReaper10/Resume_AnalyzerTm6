@@ -1,5 +1,5 @@
 import React from 'react';
-import './FitScoreCard.css'; 
+import '../styling/FitScoreCard.css'; 
 
 function FitScoreCard() {
   return (

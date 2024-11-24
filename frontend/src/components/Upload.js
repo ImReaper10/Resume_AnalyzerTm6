@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { resumeUpload, jobDescriptionUpload, getAccountInfo } from "../utils/networkmanager";
 import "../styling/Upload.css";
+import { useNavigate } from 'react-router-dom';
+import { redirectIfNotLoggedIn } from '../utils/networkmanager';
 
 function checkFileValidity(file)
 {
@@ -26,6 +28,11 @@ const Upload = () => {
     const [charCount, setCharCount] = useState(0);
     const [message, setMessage] = useState("");
     const [uploading, setUploading] = useState(false);
+    let navigate = useNavigate();
+
+    React.useEffect(() => {
+        redirectIfNotLoggedIn(navigate);
+    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

@@ -1,5 +1,5 @@
 import React from 'react';
-import './MatchedKeywords.css'; 
+import '../styling/MatchedKeywords.css'; 
 
 function MatchedKeywords() {
   const keywords = ['Python', 'Team Leadership', 'Data Analysis'];

@@ -1,8 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import './DashboardLayout.css'; 
+import { Link, useNavigate } from 'react-router-dom';
+import '../styling/DashboardLayout.css'; 
+import { redirectIfNotLoggedIn } from '../utils/networkmanager';
 
 function DashboardLayout({ children }) {
+  let navigate = useNavigate();
+  React.useEffect(() => {
+    redirectIfNotLoggedIn(navigate);
+  }, [navigate]);
   return (
     <div className="container">
       <nav className="navbar">
