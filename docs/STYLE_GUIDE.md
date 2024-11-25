@@ -50,7 +50,7 @@
 2. Place inline comments on a separate line above the code they refer to.
 3. Provide meaningful messages in `console.error` to help trace issues.
     - For errors that happen "frequently" such as the file uploaded being too large, these can be commented out or left out for the production version to not clutter the console with unnecessary information
-
+4. Place a comment explaining what functions or large groups of code do on the line above them
 
 
 ### Name Declaration
