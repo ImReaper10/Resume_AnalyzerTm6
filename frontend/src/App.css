@@ -36,3 +36,66 @@
     transform: rotate(360deg);
   }
 }
+
+.main-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f4f4f9;
+  font-family: Arial, sans-serif;
+  color: #333;
+  width: 100%;
+}
+
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #6200ea;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.main-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.username-placeholder {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.signout-button {
+  padding: 8px 16px;
+  background-color: #ff5252;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.signout-button:hover {
+  background-color: #d32f2f;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 20px;
+}

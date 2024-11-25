@@ -1,13 +1,51 @@
 import React, { useState } from "react";
-import { resumeUpload, jobDescriptionUpload, getAccountInfo } from "../utils/networkmanager";
+import { resumeUpload, jobDescriptionUpload, getAccountInfo, getUploadedData } from "../utils/networkmanager.js";
 import "../styling/Upload.css";
+import { useNavigate } from 'react-router-dom';
+import { redirectIfNotLoggedIn } from '../utils/networkmanager.js';
+import LoadingWheel from "./LoadingWheel.js";
 
+//=========== Oscar Cotto and James Goode ===========
+//Checks if a file is valid or not (such as 2mb or less)
+function checkFileValidity(file)
+{
+    const ALLOWED_FILE_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        return {success: false, message: "Invalid file type. Only PDF or DOCX files are allowed."};
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+        return {success: false, message: "File size exceeds the limit of 2MB."};
+    }
+
+    return {success: true};
+
+}
+
+//=========== Oscar Cotto ===========
+//Layout for uploading resumes and job descriptions and checking if they are the correct size and type
 const Upload = () => {
     const [jobDescription, setJobDesc] = useState("");
     const [file, setFile] = useState(null);
     const [charCount, setCharCount] = useState(0);
     const [message, setMessage] = useState("");
     const [uploading, setUploading] = useState(false);
+    let navigate = useNavigate();
+
+    React.useEffect(() => {
+        redirectIfNotLoggedIn(navigate);
+        getUploadedData().then((data) => {
+            if(data.success)
+            {
+                if(Object.keys(data.data).length !== 0)
+                {
+                    navigate("/dashboard");
+                }
+            }
+        });
+    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -31,6 +69,7 @@ const Upload = () => {
             if (resumeResult.success) {
                 const descResult = await jobDescriptionUpload(jobDescription);
                 if (descResult.success) {
+                    navigate("/dashboard")
                     setMessage("Resume and job description uploaded successfully!");
                 } else {
                     setMessage(`Job description upload failed: ${descResult.message}`);
@@ -69,6 +108,9 @@ const Upload = () => {
                         onChange={handleFileChange}
                         disabled={uploading}
                     />
+                    {file && !checkFileValidity(file).success &&
+                        <em style={{color:"red"}}>{checkFileValidity(file).message}</em>
+                    }
                 </div>
                 <div className="form-field">
                     <label htmlFor="description">Job Description:</label>
@@ -80,15 +122,18 @@ const Upload = () => {
                         placeholder="Enter the job description..."
                         disabled={uploading}
                     />
-                    <p className="character-count">
+                    <p className="character-count" style={{color:`${jobDescription.length>5000?"red":"black"}`}}>
                         {charCount} characters
                     </p>
                 </div>
-                <button type="submit" disabled={uploading}>
+                <button type="submit" disabled={uploading || !jobDescription.trim() || jobDescription.length>5000 || !file || !checkFileValidity(file).success}>
                     {uploading ? "Uploading..." : "Upload"}
                 </button>
             </form>
-            {message && <p className="submission-message">{message}</p>}
+            <br></br>
+            {uploading &&
+                <LoadingWheel></LoadingWheel>
+            }
         </div>
     );
 };

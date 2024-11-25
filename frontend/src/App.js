@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Upload from "./components/Upload";
@@ -7,38 +7,91 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import FitScoreCard from "./components/FitScoreCard";
 import MatchedKeywords from "./components/MatchedKeywords";
 import ImprovementSuggestions from "./components/ImprovementSuggestions";
-import PrivateRoute from "./components/PrivateRoute";
+import { getAccountInfo, getBackendStatus } from "./utils/networkmanager.js";
+import "./App.css"
+import View from "./components/View";
 
+//=========== James Goode ===========
+//Made to detect if a route changes so we can set the username at the top of the page
+function RouteChangeDetector({usernameSetter}) {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    getAccountInfo().then((account) => {
+      if(account.success)
+      {
+        usernameSetter(account.info.username)
+      }
+      else
+      {
+        usernameSetter("");
+      }
+    });
+  }, [location]);
+
+  return null;
+}
+
+//=========== James Goode and Japjot Bedi (for dashboard and routes) ===========
+//Below holds all of our routes along with the header at the top of the page
 const App = () => {
+  const [username, setUsername] = React.useState("");
+  const [backendStatus, setStatus] = React.useState(true);
+
+  useEffect(() => {
+    getBackendStatus().then((status) => {
+      if(!status.success)
+      {
+        setStatus(false);
+        return;
+      }
+    });
+  }, []);
+
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/upload" element={<Upload />} />
+    <div className="main-container">
+      <header className="main-header">
+        <h1 className="main-title">Resume Analyzer</h1>
+        {username &&
+          <div className="user-controls">
+            <span className="username-placeholder">{username}</span>
+            <button onClick={() => {localStorage.setItem('jwt', ''); window.location.reload()}} className="signout-button">Sign Out</button>
+          </div>
+        }
+      </header>
+      {backendStatus &&
+      <main>
+        <Router>
+          <RouteChangeDetector usernameSetter={setUsername} />
+          <Routes>
 
-        {/* Protected Dashboard Routes */}
-        <Route
-          path="/dashboard/*"
-          element={
-            <PrivateRoute>
-              <DashboardLayout>
-                <Routes>
-                  <Route path="fit-score" element={<FitScoreCard />} />
-                  <Route path="keywords" element={<MatchedKeywords />} />
-                  <Route path="suggestions" element={<ImprovementSuggestions />} />
-                  <Route path="*" element={<Navigate to="fit-score" />} />
-                </Routes>
-              </DashboardLayout>
-            </PrivateRoute>
-          }
-        />
+            <Route path="/" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/upload" element={<Upload />} />
 
-        {/* Catch-All Redirect */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
+            <Route
+              path="/dashboard/*"
+              element={
+                <DashboardLayout>
+                  <Routes>
+                    <Route path="fit-score" element={<FitScoreCard />} />
+                    <Route path="keywords" element={<MatchedKeywords />} />
+                    <Route path="suggestions" element={<ImprovementSuggestions />} />
+                    <Route path="view" element={<View />} />
+                    <Route path="*" element={<Navigate to="fit-score" />} />
+                  </Routes>
+                </DashboardLayout>
+              }
+            />
+
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Router>
+      </main>}
+      {!backendStatus &&
+        <h1>Unfortunatly we were unable to reach our backend, please try again later...</h1>
+      }
+    </div>
   );
 };
 

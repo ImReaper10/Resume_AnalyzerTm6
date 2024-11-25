@@ -1,0 +1,30 @@
+.loading-wheel-container {
+    display: inline-block;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-wheel {
+    display: inline-block;
+    border: 8px solid rgba(0, 0, 0, 0.1);
+    border-top: 8px solid #6236ff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    top: 20px;
+    animation: spin 1s linear infinite;
+}
+
+span {
+    font-size: large;
+    margin: 10px;
+}
+@keyframes spin {
+    from {
+        transform: translateY(40%) rotate(0deg);
+    }
+    to {
+        transform: translateY(40%)  rotate(360deg);
+    }
+}
+  

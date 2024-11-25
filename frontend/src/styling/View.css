@@ -1,0 +1,14 @@
+.card {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    text-align: center;
+    background-color: #fff;
+}
+
+.displaytext {
+    text-align: left;
+    background-color: rgb(245, 245, 245);
+    color: rgb(0, 0, 0);
+    padding: 10px;
+}

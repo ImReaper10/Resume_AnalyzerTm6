@@ -4,7 +4,10 @@ const express = require("express");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const sqlite3 = require("sqlite3").verbose();
-const {extractTextFromPdf, extractTextFromDocx} = require("./fileParserUtils");
+const {
+    extractTextFromPdf,
+    extractTextFromDocx
+} = require("./fileParserUtils");
 const app = express();
 const cors = require('cors');
 const multer = require('multer');
@@ -12,19 +15,31 @@ const fileType = require('file-type');
 app.use(express.json());
 app.use(cors());
 
+//For managing form files
 const upload = multer({
-    limits: { fileSize: 2 * 1024 * 1024 },
+    limits: {
+        fileSize: 2 * 1024 * 1024
+    },
     storage: multer.memoryStorage(),
-  });
+});
 
+//=========== Oscar Cotto ===========
+//The below is for validating file types from a buffer, mainly checks if a file is a pdf or docx
+//Edited by James Goode
 const validateFileType = async (fileBuffer) => {
     const type = await fileType.fromBuffer(fileBuffer);
-    return {valid: type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'), mime: type?type.mime:undefined};
+    return {
+        valid: type && (type.mime === 'application/pdf' || type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+        mime: type ? type.mime : undefined
+    };
 };
 
+//Below are the file paths for the database and secret key for JWT
 const SECRET_FILE_PATH = path.join(__dirname, "jwt_secret.key");
-const DATABASE_FILE_PATH = path.join(__dirname, "users.db"); 
+const DATABASE_FILE_PATH = path.join(__dirname, "users.db");
 
+//=========== James Goode ===========
+//The below creates a JWT Secret if one is not already created, then returns the JWT Secret
 function getJWTSecret() {
     if (fs.existsSync(SECRET_FILE_PATH)) {
         return fs.readFileSync(SECRET_FILE_PATH, "utf8");
@@ -39,6 +54,7 @@ function getJWTSecret() {
 const JWT_SECRET = getJWTSecret();
 const JWT_EXPIRATION = "1h";
 
+//The below is the object that holds all the private keys
 let privateKeys = {};
 
 // Set up SQLite database
@@ -57,8 +73,7 @@ const db = new sqlite3.Database(DATABASE_FILE_PATH, (err) => {
             )`,
             (err) => {
                 if (err) {
-                    if(err.message.indexOf("already exists") !== -1)
-                    {
+                    if (err.message.indexOf("already exists") !== -1) {
                         console.log("Users table found.")
                     } else {
                         console.error("Error creating users table:", err.message);
@@ -71,10 +86,12 @@ const db = new sqlite3.Database(DATABASE_FILE_PATH, (err) => {
     }
 });
 
+//=========== James Goode ===========
+//The below is for inserting a user into the sql database
 function registerUser(email, username, hashedPassword, salt) {
     return new Promise((resolve, reject) => {
         const sql = `INSERT INTO users (email, username, password_hash, salt) VALUES (?, ?, ?, ?)`;
-        db.run(sql, [email, username, hashedPassword, salt], function (err) {
+        db.run(sql, [email, username, hashedPassword, salt], function(err) {
             if (err) {
                 return reject(err);
             }
@@ -83,6 +100,8 @@ function registerUser(email, username, hashedPassword, salt) {
     });
 }
 
+//=========== James Goode ===========
+//The below essentially just finds a user by there email, but is mainly used in the logging in process
 function loginUser(email) {
     return new Promise((resolve, reject) => {
         const sql = `SELECT * FROM users WHERE email = ?`;
@@ -95,6 +114,8 @@ function loginUser(email) {
     });
 }
 
+//=========== James Goode ===========
+//Checks for the existence of a user in the database
 function checkForUser(email, username) {
     return new Promise((resolve, reject) => {
         const sql = `SELECT 1 FROM users WHERE email = ? OR username = ?`;
@@ -107,21 +128,37 @@ function checkForUser(email, username) {
     });
 }
 
+//=========== James Goode ===========
+//Finds a user in the database by there id
+function getUserById(id) {
+    return new Promise((resolve, reject) => {
+        const sql = `SELECT * FROM users WHERE id = ?`;
+        db.get(sql, [id], (err, row) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(row);
+        });
+    });
+}
+
+//=========== James Goode ===========
+//Util for checking if an email is valid
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
 
+//=========== James Goode ===========
+//Decrypts data by finding the right key
 function decrypt(data, keypairId) {
     const privKey = privateKeys[keypairId];
-    if(!privKey)
-    {
+    if (!privKey) {
         throw Error("Invalid keypairId");
     }
     delete privateKeys[keypairId];
     const encryptedData = Buffer.from(data, "base64");
-    const decryptedData = crypto.privateDecrypt(
-        {
+    const decryptedData = crypto.privateDecrypt({
             key: privKey,
             padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
         },
@@ -130,57 +167,86 @@ function decrypt(data, keypairId) {
     return decryptedData.toString("utf8");
 }
 
+//=========== James Goode ===========
+//Creates and sends a public key back
 app.get("/api/public-key", (req, res) => {
     crypto.generateKeyPair(
-        "rsa",
-        {
+        "rsa", {
             modulusLength: 2048,
-            publicKeyEncoding: { type: "spki", format: "pem" },
-            privateKeyEncoding: { type: "pkcs8", format: "pem" },
+            publicKeyEncoding: {
+                type: "spki",
+                format: "pem"
+            },
+            privateKeyEncoding: {
+                type: "pkcs8",
+                format: "pem"
+            },
         },
         (err, pubKey, privKey) => {
             if (err) {
                 console.error("Error generating key pair:", err);
-                res.status(400).json({ error: "Error generating key" });
+                res.status(400).json({
+                    error: "Error generating key"
+                });
                 return;
             }
             let keypairId = crypto.randomBytes(32).toString("hex");
             privateKeys[keypairId] = privKey;
-            res.send({key: pubKey, keypairId});
+            res.send({
+                key: pubKey,
+                keypairId
+            });
         }
     );
 });
 
 
 
-//Maybe change it to allow same username, also I have to add password strength check
+//=========== James Goode ===========
+//API for registering a user, also does necessary checks
 app.post("/api/register", async (req, res) => {
     try {
-        const { email, password, username, keypairId} = req.body;
+        const {
+            email,
+            password,
+            username,
+            keypairId
+        } = req.body;
         if (!email || !password || !username) {
-            return res.status(400).json({ error: "Missing email, username, or password" });
+            return res.status(400).json({
+                error: "Missing email, username, or password"
+            });
         }
         if (!keypairId) {
-            return res.status(400).json({ error: "Missing keypairId" });
+            return res.status(400).json({
+                error: "Missing keypairId"
+            });
         }
         if (!isValidEmail(email)) {
-            return res.status(400).json({ error: "Invalid email format" });
+            return res.status(400).json({
+                error: "Invalid email format"
+            });
         }
         if (await checkForUser(email, username)) {
-            return res.status(400).json({ error: "Email or username already exists" });
+            return res.status(400).json({
+                error: "Email or username already exists"
+            });
         }
         let plainPassword;
         try {
             plainPassword = decrypt(password, keypairId);
         } catch (err) {
-            return res.status(400).json({ error: "Invalid encrypted password" });
+            return res.status(400).json({
+                error: "Invalid encrypted password"
+            });
         }
 
         let passcheck = checkSecurePassword(plainPassword);
 
-        if(!passcheck.valid)
-        {
-            return res.status(400).json({ error: passcheck.message });
+        if (!passcheck.valid) {
+            return res.status(400).json({
+                error: passcheck.message
+            });
         }
 
         const salt = crypto.randomBytes(16).toString("hex");
@@ -189,99 +255,165 @@ app.post("/api/register", async (req, res) => {
             .toString("hex");
 
         await registerUser(email, username, hashedPassword, salt);
-        res.status(201).json({ message: "User registered" });
+        res.status(201).json({
+            message: "User registered"
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "There was an error registering: " + err.message });
+        //console.error(err);
+        res.status(500).json({
+            error: "There was an error registering: " + err.message
+        });
     }
 });
 
+//=========== James Goode ===========
+//Endpoint for logging in and getting JWT
 app.post("/api/login", async (req, res) => {
-    const { email, password, keypairId , keyForJWT} = req.body;
+    const {
+        email,
+        password,
+        keypairId,
+        keyForJWT
+    } = req.body;
 
     if (!keypairId) {
-        return res.status(400).json({ error: "Missing keypairId" });
+        return res.status(400).json({
+            error: "Missing keypairId"
+        });
     }
 
     if (!email || !password) {
-        return res.status(400).json({ error: "Missing email or password" });
+        return res.status(400).json({
+            error: "Missing email or password"
+        });
     }
 
     let plainPassword;
     try {
         plainPassword = decrypt(password, keypairId);
     } catch (err) {
-        return res.status(400).json({ error: "Invalid encrypted password: " + err.message });
+        return res.status(400).json({
+            error: "Invalid encrypted password: " + err.message
+        });
     }
 
     try {
         const user = await loginUser(email);
         if (!user) {
-            return res.status(400).json({ error: "Invalid email or password" });
+            return res.status(400).json({
+                error: "Invalid email or password"
+            });
         }
 
         const hashedPassword = crypto
             .pbkdf2Sync(plainPassword, user.salt, 1000, 64, "sha512")
             .toString("hex");
         if (hashedPassword !== user.password_hash) {
-            return res.status(400).json({ error: "Invalid email or password" });
+            return res.status(400).json({
+                error: "Invalid email or password"
+            });
         }
 
-        const token = jwt.sign(
-            { email: user.email, username: user.username },
-            JWT_SECRET,
-            { expiresIn: JWT_EXPIRATION }
+        //console.log(user);
+
+        const token = jwt.sign({
+                id: user.id
+            },
+            JWT_SECRET, {
+                expiresIn: JWT_EXPIRATION
+            }
         );
 
-        console.log(keyForJWT);
-        console.log(token);
-        let encryptedToken = crypto.publicEncrypt(
-            {
+        let encryptedToken = crypto.publicEncrypt({
                 key: keyForJWT,
                 padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
             },
             token
         ).toString('base64');
 
-        res.status(200).json({ token: encryptedToken });
+        res.status(200).json({
+            token: encryptedToken
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Error during login: " + err.message });
+        //console.error(err);
+        res.status(500).json({
+            error: "Error during login: " + err.message
+        });
     }
 });
 
+//=========== James Goode ===========
+//Returns basic account information
 app.get("/api/account", authenticateToken, async (req, res) => {
     try {
         const sql = `SELECT email, username FROM users WHERE email = ?`;
         db.get(sql, [req.user.email], (err, user) => {
             if (err) {
-                return res.status(500).json({ error: "Database error: " + err.message });
+                return res.status(500).json({
+                    error: "Database error: " + err.message
+                });
             }
             if (!user) {
-                return res.status(404).json({ error: "User not found." });
+                return res.status(404).json({
+                    error: "User not found."
+                });
             }
             res.status(200).json(user);
         });
     } catch (err) {
-        res.status(500).json({ error: "An error occurred: " + err.message });
+        res.status(500).json({
+            error: "An error occurred: " + err.message
+        });
     }
 });
 
-//TODO: SET UP A WAY FOR THINGS TO REMOVE THEMSELVES FROM TEMP STORAGE AFTER CERTAIN PERIOD OF TIME
-const temp_storage = {}; //This is for the PDF text and job descriptions
+//=========== James Goode ===========
+//Gets uploaded data that is currently saved
+app.get("/api/currently-uploaded-data", authenticateToken, async (req, res) => {
+    let current_data = temp_storage[req.user.email];
+    if (current_data) {
+        res.status(200).json({
+            data: current_data
+        });
+    } else {
+        res.status(200).json({
+            data: {}
+        }); //For now I am making it send an empty object, but we may end up wanting different behavior
+    }
+});
+
+//=========== James Goode ===========
+//Endpoint for deleting currently uploaded data
+app.delete("/api/currently-uploaded-data", authenticateToken, async (req, res) => {
+    let current_data = temp_storage[req.user.email];
+    if (current_data) {
+        delete temp_storage[req.user.email];
+        res.status(200).json({
+            message: "Data deleted"
+        });
+    } else {
+        res.status(200).json({
+            message: "No data to delete"
+        });
+    }
+});
+
+//This is for the PDF text and job descriptions
+const temp_storage = {};
 
 //Every minute check temp storage and remove older than 30 minute entries
 setInterval(() => {
     let currentTime = Date.now();
-    for(let item of Object.keys(temp_storage))
-    {
-        if(currentTime - temp_storage[item].uploadTime > 1800000)
-        {
+    for (let item of Object.keys(temp_storage)) {
+        if (currentTime - temp_storage[item].uploadTime > 1800000) {
             delete temp_storage[item]
         }
     }
 }, 60000);
 
+//=========== Oscar Cotto and Javin Kenta (for storage assistance) ===========
+//The below is the endpoint for uploading resumes, makes sure that the file uploaded is a pdf or docx, if it is less than 2mb, and stores it for later use
+//Edited by James Goode
 app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), async (req, res) => {
     try {
         const file = req.file;
@@ -309,12 +441,9 @@ app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), 
         }
 
         let extractedText = "";
-        if(isValidFileType.mime === "application/pdf")
-        {
+        if (isValidFileType.mime === "application/pdf") {
             extractedText = await extractTextFromPdf(file.buffer);
-        }
-        else
-        {
+        } else {
             extractedText = await extractTextFromDocx(file.buffer);
         }
 
@@ -330,7 +459,7 @@ app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), 
             status: 'success',
         });
     } catch (error) {
-        console.error('Error processing resume upload:', error);
+        //console.error('Error processing resume upload:', error);
         res.status(500).json({
             error: 'An error occurred while processing the file.',
             status: 'error',
@@ -338,71 +467,101 @@ app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), 
     }
 });
 
-// Global error handler for Multer file size errors
+//=========== Oscar Cotto ===========
+//Global error handler for Multer file size errors
 app.use((err, req, res, next) => {
     if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json({
-        error: 'File size exceeds the limit of 2MB.',
-        status: 'error',
+            error: 'File size exceeds the limit of 2MB.',
+            status: 'error',
         });
     }
     next(err);
 });
 
+//=========== Oscar Cotto and Javin Kenta (for storage assistance) ===========
+//The below is the endpoint for uploading job descriptions, makes sure that the job description is less than or equal to 5000 characters, and stores it for later use
+//Edited by James Goode
 app.post('/api/job-description', authenticateToken, (req, res) => {
-    const { job_description } = req.body;
+    try
+    {
+        const {
+            job_description
+        } = req.body;
 
-    if (!job_description || job_description.length > 5000) {
-        return res.status(400).json({
-            error: 'Job description exceeds character limit.',
-            status: 'error',
+        if (!job_description || job_description.length > 5000) {
+            return res.status(400).json({
+                error: 'Job description exceeds character limit.',
+                status: 'error',
+            });
+        }
+
+        // Clean the job description by removing extraneous whitespace
+        const cleanedDescription = job_description.trim();
+
+        // Store the job description associated with the user
+        if (!temp_storage[req.user.email]) {
+            temp_storage[req.user.email] = {};
+        }
+        temp_storage[req.user.email].jobDescription = cleanedDescription;
+        temp_storage[req.user.email].uploadTime = Date.now();
+
+        res.status(200).json({
+            message: 'Job description submitted and stored successfully.',
+            status: 'success',
         });
     }
-
-    // Clean the job description by removing extraneous whitespace
-    const cleanedDescription = job_description.trim();
-
-    // Store the job description associated with the user
-    if (!temp_storage[req.user.email]) {
-        temp_storage[req.user.email] = {};
+    catch(e)
+    {
+        res.status(500).json({error: e.message});
     }
-    temp_storage[req.user.email].jobDescription = cleanedDescription;
-    temp_storage[req.user.email].uploadTime = Date.now();
+});
 
+//=========== James Goode ===========
+//Endpoint for mainly checking if the backend is running
+app.get('/api/status', (req, res) => {
     res.status(200).json({
-        message: 'Job description submitted and stored successfully.',
-        status: 'success',
+        message: "Up and running!"
     });
 });
 
+//Starts the server
 app.listen(5000, "localhost", () => {
     console.log("Server started...");
 });
 
+//=========== James Goode ===========
+//Middleware for authentication
 function authenticateToken(req, res, next) {
-    try
-    {
+    try {
         const authHeader = req.headers["authorization"];
         const tokenEnc = authHeader && authHeader.split(" ");
         const token = decrypt(tokenEnc[2], tokenEnc[1]);
         if (!token) {
-            return res.status(401).json({ error: "Access denied. No token provided." });
+            return res.status(401).json({
+                error: "Access denied. No token provided."
+            });
         }
 
-        jwt.verify(token, JWT_SECRET, (err, user) => {
+        jwt.verify(token, JWT_SECRET, async (err, user) => {
             if (err) {
-                return res.status(403).json({ error: "Invalid or expired token." });
+                return res.status(403).json({
+                    error: "Invalid or expired token."
+                });
             }
-            req.user = user;
+            req.user = await getUserById(user.id);
+            //console.log(req.user);
             next();
         });
-    }
-    catch(err)
-    {
-        return res.status(400).json({ error: "There was an error while authenticating: "  + err.message});
+    } catch (err) {
+        return res.status(400).json({
+            error: "There was an error while authenticating: " + err.message
+        });
     }
 }
 
+//=========== James Goode ===========
+//Util for checking if a password is secure or not
 function checkSecurePassword(password) {
     const minLength = 8;
     const hasUppercase = /[A-Z]/;
@@ -411,20 +570,38 @@ function checkSecurePassword(password) {
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
 
     if (password.length < minLength) {
-        return { valid: false, message: "Password must be at least 8 characters long." };
+        return {
+            valid: false,
+            message: "Password must be at least 8 characters long."
+        };
     }
     if (!hasUppercase.test(password)) {
-        return { valid: false, message: "Password must include at least one uppercase letter." };
+        return {
+            valid: false,
+            message: "Password must include at least one uppercase letter."
+        };
     }
     if (!hasLowercase.test(password)) {
-        return { valid: false, message: "Password must include at least one lowercase letter." };
+        return {
+            valid: false,
+            message: "Password must include at least one lowercase letter."
+        };
     }
     if (!hasNumber.test(password)) {
-        return { valid: false, message: "Password must include at least one number." };
+        return {
+            valid: false,
+            message: "Password must include at least one number."
+        };
     }
     if (!hasSpecialChar.test(password)) {
-        return { valid: false, message: "Password must include at least one special character." };
+        return {
+            valid: false,
+            message: "Password must include at least one special character."
+        };
     }
 
-    return { valid: true, message: "Password is secure." };
+    return {
+        valid: true,
+        message: "Password is secure."
+    };
 }

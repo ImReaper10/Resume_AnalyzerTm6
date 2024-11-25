@@ -1,6 +1,25 @@
 import axios from 'axios';
 import forge from 'node-forge';
 
+//=========== James Goode ===========
+//Checks if we can connect to the backend
+async function getBackendStatus()
+{
+    if(useMock)
+    {
+        return { success: true, message: "Up and running!" };
+    }
+    try {
+        const status = await axios.get('http://localhost:5000/api/status');
+        return { success: true, message: status.data.message };
+    } catch (error) {
+        const errorMessage = error.response?.data?.error || error.message;
+        return { success: false, message: errorMessage };
+    }
+}
+
+//=========== James Goode ===========
+//Automates logging in with backend
 async function login(email, password) {
     if(useMock)
     {
@@ -49,6 +68,8 @@ async function login(email, password) {
     }
 }
 
+//=========== James Goode ===========
+//Automates signing up with backend
 async function signup(email, username, password) {
     if(useMock)
     {
@@ -92,6 +113,8 @@ async function signup(email, username, password) {
     }
 }
 
+//=========== James Goode ===========
+//Gets the account info from backend
 async function getAccountInfo() {
     if(useMock)
     {
@@ -137,6 +160,8 @@ async function getAccountInfo() {
     }
 }
 
+//=========== James Goode ===========
+//Automates uploading a resume with the backend
 async function resumeUpload(resume) {
     if(useMock)
     {
@@ -178,6 +203,8 @@ async function resumeUpload(resume) {
     }
 }
 
+//=========== James Goode ===========
+//Automates uploading a job description with the backend
 async function jobDescriptionUpload(job_description) {
     if(useMock)
     {
@@ -215,6 +242,97 @@ async function jobDescriptionUpload(job_description) {
     }
 }
 
+//=========== James Goode ===========
+//Automates getting the currently uploaded data with the backend
+async function getUploadedData() {
+    if(useMock)
+    {
+        return await mockGetUploadedData();
+    }
+    try {
+        const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
+            const { key: publicKey, keypairId } = publicKeyResponse.data;
+
+            if (!publicKey || !keypairId) {
+                throw new Error('Failed to retrieve public key or keypairId.');
+            }
+
+            const forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
+
+            const encJWT = forge.util.encode64(
+                forgePublicKey.encrypt(localStorage.getItem("jwt"), 'RSA-OAEP', {
+                    md: forge.md.sha1.create(),
+                    mgf1: {
+                        md: forge.md.sha1.create()
+                    }
+                })
+            );
+
+            const response = await axios.get('http://localhost:5000/api/currently-uploaded-data', {        
+                headers: {
+                    authorization: `Bearer ${keypairId} ${encJWT}`
+                }
+            });
+
+        return { success: true , data: response.data.data};
+    } catch (error) {
+        const errorMessage = error.response?.data?.error || error.message;
+        return { success: false, message: errorMessage };
+    }
+}
+
+//=========== James Goode ===========
+//Automates deleting the currently uploaded data with the backend
+async function deleteUploadedData() {
+    if(useMock)
+    {
+        return await mockDeleteUploadedData();
+    }
+    try {
+        const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
+            const { key: publicKey, keypairId } = publicKeyResponse.data;
+
+            if (!publicKey || !keypairId) {
+                throw new Error('Failed to retrieve public key or keypairId.');
+            }
+
+            const forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
+
+            const encJWT = forge.util.encode64(
+                forgePublicKey.encrypt(localStorage.getItem("jwt"), 'RSA-OAEP', {
+                    md: forge.md.sha1.create(),
+                    mgf1: {
+                        md: forge.md.sha1.create()
+                    }
+                })
+            );
+
+            const response = await axios.delete('http://localhost:5000/api/currently-uploaded-data', {        
+                headers: {
+                    authorization: `Bearer ${keypairId} ${encJWT}`
+                }
+            });
+
+        return { success: true , message: response.data.message};
+    } catch (error) {
+        const errorMessage = error.response?.data?.error || error.message;
+        return { success: false, message: errorMessage };
+    }
+}
+
+//=========== James Goode ===========
+//Util for redirecting if detected that user is not logged in
+async function redirectIfNotLoggedIn(navigate)
+{
+    let loggedIn = (await getAccountInfo()).success;
+    if(!loggedIn)
+    {
+        navigate("/");
+    }
+}
+
+//=========== James Goode ===========
+//Util for checking if a password is secure or not
 function checkSecurePassword(password) {
     const minLength = 8;
     const hasUppercase = /[A-Z]/;
@@ -241,13 +359,21 @@ function checkSecurePassword(password) {
     return { valid: true, message: "Password is secure." };
 }
 
-let useMock = false;
+
+//=========== James Goode ===========
+//ALL of the below code is for mimicking the above operations as if connected to the server
+
+let useMock = localStorage.getItem("useMock") === "yes";
 if(!localStorage.getItem("users"))
 {
     localStorage.setItem("users", JSON.stringify([{email: "mock@mock.com", user: "Mock", pass: "mockPass#"}]));
 }
 let mockUsers = JSON.parse(localStorage.getItem("users"));
-let mockData = {};
+if(!localStorage.getItem("uploadedData"))
+{
+    localStorage.setItem("uploadedData", JSON.stringify({}));
+}
+let mockData = JSON.parse(localStorage.getItem("uploadedData"));
 
 setInterval(() => {
     let currentTime = Date.now();
@@ -258,11 +384,13 @@ setInterval(() => {
             delete mockData[item]
         }
     }
+    localStorage.setItem("uploadedData", JSON.stringify(mockData));
 }, 60000);
 
 function setMocking(mocking)
 {
     useMock = mocking;
+    localStorage.setItem("useMock", mocking?"yes":"no")
 }
 
 async function mockLogin(email, password) {
@@ -350,6 +478,7 @@ async function mockResumeUpload(resume) {
     }
     mockData[accountInfo.info.email].resumeText = "Mock resume text";
     mockData[accountInfo.info.email].uploadTime = Date.now();
+    localStorage.setItem("uploadedData", JSON.stringify(mockData));
 
     return { success: true };
 }
@@ -373,8 +502,51 @@ async function mockJobDescriptionUpload(job_description) {
     }
     mockData[accountInfo.info.email].jobDescription = job_description.trim();
     mockData[accountInfo.info.email].uploadTime = Date.now();
+    localStorage.setItem("uploadedData", JSON.stringify(mockData));
 
     return { success: true };
 }
 
-export {login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, checkSecurePassword, setMocking}
+async function mockGetUploadedData()
+{
+    let accountInfo = await mockGetAccountInfo();
+
+    if(!accountInfo.success)
+    {
+        return accountInfo;
+    }
+
+    let data = mockData[accountInfo.info.email];
+    if(data)
+    {
+        return {success: true, data: data};
+    }
+    else
+    {
+        return {success: true, data: {}};
+    }
+}
+
+async function mockDeleteUploadedData()
+{
+    let accountInfo = await mockGetAccountInfo();
+
+    if(!accountInfo.success)
+    {
+        return accountInfo;
+    }
+
+    let data = mockData[accountInfo.info.email];
+    if(data)
+    {
+        delete mockData[accountInfo.info.email];
+        localStorage.setItem("uploadedData", JSON.stringify(mockData));
+        return {success: true, message: "Data deleted"};
+    }
+    else
+    {
+        return {success: true, message: "No data to delete"};
+    }
+}
+
+export {getBackendStatus, login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, getUploadedData, deleteUploadedData, redirectIfNotLoggedIn, checkSecurePassword, setMocking}
