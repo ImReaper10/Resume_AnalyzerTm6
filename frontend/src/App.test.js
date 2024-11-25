@@ -50,7 +50,7 @@ const TEST_USERNAME = "Test User";
 
 //=========== Japjot Bedi amd James Goode ===========
 //Tests signing up for a new account, while also testing error checks
-test('Signing up', async () => {
+test('Sign up page (registering and also checking if proper messages are shown (ex. Insecure password))', async () => {
   setMocking(true);
   render(<App />);
   userEvent.click(screen.getAllByText("Sign Up")[0]);
@@ -101,7 +101,7 @@ test('Signing up', async () => {
 
 //=========== Japjot Bedi amd James Goode ===========
 //Tests logging in, while also testing error checks
-test('Logging in', async () => {
+test('Login page (logging in to an existing account, as well as checking messages)', async () => {
   //localStorage.clear();
   render(<App />);
   const emailInput = screen.getByPlaceholderText("Email");
@@ -140,7 +140,7 @@ test('Logging in', async () => {
 
 //=========== Japjot Bedi amd James Goode ===========
 //Tests uploading a resume and browsing the dashboard after
-test('Uploading valid pdf resume (after trying invalid files)', async () => {
+test('Uploading valid resume (after trying invalid files) and uploading job description (after trying invalid descriptions (ex. too long))', async () => {
   render(<App />);
   const fileInput = screen.getByLabelText("Select Resume (PDF/DOCX):");
   const jobDescriptionInput = screen.getByLabelText("Job Description:");
