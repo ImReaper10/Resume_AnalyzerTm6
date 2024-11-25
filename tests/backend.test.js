@@ -6,7 +6,8 @@ const crypto = require('crypto');
 
 const API_URL = 'http://localhost:5000/api';
 
-// Helper function to encrypt password
+//=========== James Goode ===========
+//Helper function to encrypt password
 async function encryptPassword(password) {
     const publicKeyResponse = await axios.get(`${API_URL}/public-key`);
     const publicKey = publicKeyResponse.data.key;
@@ -21,6 +22,8 @@ async function encryptPassword(password) {
     return { password: encryptedBuffer.toString('base64'), keypairId };
 }
 
+//=========== James Goode ===========
+//Helper function for JWT key pairs
 async function jwtKeyPair()
 {
     return await (new Promise((res) => {
@@ -45,9 +48,11 @@ async function jwtKeyPair()
 
 }
 
+//Randomly generates a username, and email for a user to test with
 let validAccountUsername = crypto.randomBytes(4).toString('hex');
 let validAccountEmail = validAccountUsername + "@test.com";
 
+//Below are the tests which we will utilize later
 const accountTests = [
     {
         name: "Create a new account (valid data)",
@@ -146,6 +151,8 @@ const accountTests = [
     },
 ];
 
+//=========== James Goode and Everyone (for coming up with tests and assistance) ===========
+//Below are comprehensive tests for the backend APIs
 describe('API Tests', () => {
     let jwt = '';
 
@@ -209,6 +216,21 @@ describe('API Tests', () => {
         });
     });
 
+    describe('Check account information', () => {
+        test("Account information is correct", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            const response = await axios["get"](`${API_URL}/account`, {
+                headers: {
+                    authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                },
+            });
+            expect(response.status).toBe(200);
+            expect(response.data.username).toBe(validAccountUsername);
+            expect(response.data.email).toBe(validAccountEmail);
+        });
+    });
+
     describe('Resume Uploads', () => {
         const resumeTests = [
             {
@@ -239,7 +261,7 @@ describe('API Tests', () => {
             {
                 name: "No file provided",
                 filePath: "",
-                expectedStatus: 500,
+                expectedStatus: 400,
             }
         ];
 
@@ -252,6 +274,10 @@ describe('API Tests', () => {
                 if(testCase.filePath)
                 {
                     formData.append('resume_file', fileBuffer, path.basename(testCase.filePath));
+                }
+                else
+                {
+                    formData.append('resume_file', "", "");
                 }
 
                 try {
