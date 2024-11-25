@@ -3,6 +3,8 @@ import { login , getAccountInfo} from "../utils/networkmanager.js";
 import { useNavigate } from "react-router-dom";
 import "../styling/Login.css";
 
+//=========== Diego Velasquez Minaya and James Goode (assistance and styling) ===========
+//The overall layout for the login page and necessary checks
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");

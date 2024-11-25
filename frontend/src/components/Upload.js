@@ -4,17 +4,19 @@ import "../styling/Upload.css";
 import { useNavigate } from 'react-router-dom';
 import { redirectIfNotLoggedIn } from '../utils/networkmanager.js';
 
+
+//=========== Oscar Cotto and James Goode ===========
+//Checks if a file is valid or not (such as 2mb or less)
 function checkFileValidity(file)
 {
+    const ALLOWED_FILE_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
-    const allowedFileTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-    const maxFileSize = 2 * 1024 * 1024;
-
-    if (!allowedFileTypes.includes(file.type)) {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
         return {success: false, message: "Invalid file type. Only PDF or DOCX files are allowed."};
     }
 
-    if (file.size > maxFileSize) {
+    if (file.size > MAX_FILE_SIZE) {
         return {success: false, message: "File size exceeds the limit of 2MB."};
     }
 
@@ -22,6 +24,8 @@ function checkFileValidity(file)
 
 }
 
+//=========== Oscar Cotto ===========
+//Layout for uploading resumes and job descriptions and checking if they are the correct size and type
 const Upload = () => {
     const [jobDescription, setJobDesc] = useState("");
     const [file, setFile] = useState(null);

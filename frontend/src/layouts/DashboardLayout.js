@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../styling/DashboardLayout.css'; 
 import { redirectIfNotLoggedIn , getUploadedData, deleteUploadedData} from '../utils/networkmanager.js';
 
+
+//=========== Japjot Bedi ===========
+//The overall layout for the dashboard
 function DashboardLayout({ children }) {
   let navigate = useNavigate();
 

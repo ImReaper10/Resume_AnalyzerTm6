@@ -1,6 +1,8 @@
 import axios from 'axios';
 import forge from 'node-forge';
 
+//=========== James Goode ===========
+//Checks if we can connect to the backend
 async function getBackendStatus()
 {
     if(useMock)
@@ -16,6 +18,8 @@ async function getBackendStatus()
     }
 }
 
+//=========== James Goode ===========
+//Automates logging in with backend
 async function login(email, password) {
     if(useMock)
     {
@@ -64,6 +68,8 @@ async function login(email, password) {
     }
 }
 
+//=========== James Goode ===========
+//Automates signing up with backend
 async function signup(email, username, password) {
     if(useMock)
     {
@@ -107,6 +113,8 @@ async function signup(email, username, password) {
     }
 }
 
+//=========== James Goode ===========
+//Gets the account info from backend
 async function getAccountInfo() {
     if(useMock)
     {
@@ -152,6 +160,8 @@ async function getAccountInfo() {
     }
 }
 
+//=========== James Goode ===========
+//Automates uploading a resume with the backend
 async function resumeUpload(resume) {
     if(useMock)
     {
@@ -193,6 +203,8 @@ async function resumeUpload(resume) {
     }
 }
 
+//=========== James Goode ===========
+//Automates uploading a job description with the backend
 async function jobDescriptionUpload(job_description) {
     if(useMock)
     {
@@ -230,6 +242,8 @@ async function jobDescriptionUpload(job_description) {
     }
 }
 
+//=========== James Goode ===========
+//Automates getting the currently uploaded data with the backend
 async function getUploadedData() {
     if(useMock)
     {
@@ -267,6 +281,8 @@ async function getUploadedData() {
     }
 }
 
+//=========== James Goode ===========
+//Automates deleting the currently uploaded data with the backend
 async function deleteUploadedData() {
     if(useMock)
     {
@@ -304,6 +320,8 @@ async function deleteUploadedData() {
     }
 }
 
+//=========== James Goode ===========
+//Util for redirecting if detected that user is not logged in
 async function redirectIfNotLoggedIn(navigate)
 {
     let loggedIn = (await getAccountInfo()).success;
@@ -313,6 +331,8 @@ async function redirectIfNotLoggedIn(navigate)
     }
 }
 
+//=========== James Goode ===========
+//Util for checking if a password is secure or not
 function checkSecurePassword(password) {
     const minLength = 8;
     const hasUppercase = /[A-Z]/;
@@ -338,6 +358,10 @@ function checkSecurePassword(password) {
 
     return { valid: true, message: "Password is secure." };
 }
+
+
+//=========== James Goode ===========
+//ALL of the below code is for mimicking the above operations as if connected to the server
 
 let useMock = localStorage.getItem("useMock") === "yes";
 if(!localStorage.getItem("users"))

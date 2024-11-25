@@ -7,6 +7,8 @@ import * as fs from 'fs';
 import exp from 'constants';
 import { fail } from 'assert';
 
+//=========== Japjot Bedi amd James Goode ===========
+//The below is for mocking the local storage as if in a browser (this is the only way to reliably test it)
 class MockLocalStorage {
   constructor() {
       this.store = {};
@@ -38,12 +40,16 @@ class MockLocalStorage {
   }
 }
 
+//The below sets up the mock localStorage
 Object.defineProperty(window, "localStorage", { value: new MockLocalStorage() });
 
-const testEmail = "testEmail@test.com";
-const testPass = "testPass123#";
-const testUsername = "Test User";
+//The below sets up some fake credentials to be used for testing
+const TEST_EMAIL = "testEmail@test.com";
+const TEST_PASS = "testPass123#";
+const TEST_USERNAME = "Test User";
 
+//=========== Japjot Bedi amd James Goode ===========
+//Tests signing up for a new account, while also testing error checks
 test('Signing up', async () => {
   setMocking(true);
   render(<App />);
@@ -58,12 +64,12 @@ test('Signing up', async () => {
   const confirmPasswordInput = screen.getByPlaceholderText("Confirm password");
   const signUpButton = screen.getAllByText("Sign Up")[1];
   userEvent.type(emailInput, "mock@mock.com");
-  userEvent.type(screen.getByPlaceholderText("Username"), testUsername);
-  userEvent.type(passwordInput, testPass);
-  userEvent.type(confirmPasswordInput, testPass + "x");
+  userEvent.type(screen.getByPlaceholderText("Username"), TEST_USERNAME);
+  userEvent.type(passwordInput, TEST_PASS);
+  userEvent.type(confirmPasswordInput, TEST_PASS + "x");
   screen.getByText("Passwords do not match");
   userEvent.clear(confirmPasswordInput);
-  userEvent.type(confirmPasswordInput, testPass);
+  userEvent.type(confirmPasswordInput, TEST_PASS);
   try
   {
     screen.getByText("Passwords do not match");
@@ -83,7 +89,7 @@ test('Signing up', async () => {
   });
   screen.getByText("Email or username already exists");
   userEvent.clear(emailInput);
-  userEvent.type(emailInput, testEmail);
+  userEvent.type(emailInput, TEST_EMAIL);
   userEvent.click(signUpButton);
   await new Promise((res) => {
     setTimeout(() => {
@@ -93,6 +99,8 @@ test('Signing up', async () => {
   screen.getByText("Sign up successful! Please log in with your new credentials.");
 });
 
+//=========== Japjot Bedi amd James Goode ===========
+//Tests logging in, while also testing error checks
 test('Logging in', async () => {
   //localStorage.clear();
   render(<App />);
@@ -130,11 +138,12 @@ test('Logging in', async () => {
   });
 });
 
+//=========== Japjot Bedi amd James Goode ===========
+//Tests uploading a resume and browsing the dashboard after
 test('Uploading valid pdf resume (after trying invalid files)', async () => {
   render(<App />);
   const fileInput = screen.getByLabelText("Select Resume (PDF/DOCX):");
   const jobDescriptionInput = screen.getByLabelText("Job Description:");
-  console.log(fs.readFileSync("../tests/test-files/invalid-file.txt"));
   userEvent.upload(fileInput, new File([fs.readFileSync("../tests/test-files/invalid-file.txt")], "mypdf.pdf", { type: "text/plain" })); //Meaning a fake pdf
   userEvent.type(jobDescriptionInput, "Some job description");
   expect(document.getElementsByClassName("character-count")[0].innerHTML.trim()==="20 characters").toEqual(true);
@@ -207,6 +216,8 @@ test('Uploading valid pdf resume (after trying invalid files)', async () => {
   });
 });
 
+//=========== Japjot Bedi amd James Goode ===========
+//Tests signing out
 test('Signing out', async () => {
   render(<App />);
   await new Promise((res, err) => {
@@ -240,12 +251,14 @@ test('Signing out', async () => {
   });
 });
 
+//=========== Japjot Bedi amd James Goode ===========
+//Tests logging in with the account created in the first test
 test('Login with different account', async () => {
   render(<App />);
   const emailInput = screen.getByPlaceholderText("Email");
   const passwordInput = screen.getByPlaceholderText("Password");
-  userEvent.type(emailInput, testEmail);
-  userEvent.type(passwordInput, testPass);
+  userEvent.type(emailInput, TEST_EMAIL);
+  userEvent.type(passwordInput, TEST_PASS);
   const loginButton = screen.getAllByText("Login");
   userEvent.click(loginButton[1])
   await new Promise((res) => {
@@ -254,5 +267,7 @@ test('Login with different account', async () => {
       res()
     }, 1000);
   });
-  expect(document.body.getElementsByClassName("username-placeholder")[0].innerHTML).toEqual(testUsername)
+  expect(document.body.getElementsByClassName("username-placeholder")[0].innerHTML).toEqual(TEST_USERNAME)
 });
+
+console.error = () => {}; //For supressing warnings

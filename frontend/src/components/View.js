@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import '../styling/View.css'; 
 import { getUploadedData } from '../utils/networkmanager.js';
 
+//=========== James Goode ===========
+//The overall layout for the viewing page where you can view the uploaded resume and job description
 function View() {
     const [data, setData] = useState({});
     React.useEffect(() => {

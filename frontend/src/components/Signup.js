@@ -3,6 +3,8 @@ import { checkSecurePassword, login, signup } from "../utils/networkmanager.js"
 import "../styling/Signup.css";
 import { useNavigate } from "react-router-dom";
 
+//=========== Diego Velasquez Minaya and James Goode (assistance and styling) ===========
+//The overall layout for the signup page and necessary checks
 const Signup = () => {
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");

@@ -1,6 +1,8 @@
 import React from 'react';
 import '../styling/ImprovementSuggestions.css'; 
 
+//=========== Japjot Bedi ===========
+//The overall layout for the suggestions page
 function ImprovementSuggestions() {
   const suggestions = [
     'Include measurable achievements.',

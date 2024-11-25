@@ -11,7 +11,8 @@ import { getAccountInfo, getBackendStatus } from "./utils/networkmanager.js";
 import "./App.css"
 import View from "./components/View";
 
-
+//=========== James Goode ===========
+//Made to detect if a route changes so we can set the username at the top of the page
 function RouteChangeDetector({usernameSetter}) {
   const location = useLocation();
 
@@ -31,6 +32,8 @@ function RouteChangeDetector({usernameSetter}) {
   return null;
 }
 
+//=========== James Goode and Japjot Bedi (for dashboard and routes) ===========
+//Below holds all of our routes along with the header at the top of the page
 const App = () => {
   const [username, setUsername] = React.useState("");
   const [backendStatus, setStatus] = React.useState(true);

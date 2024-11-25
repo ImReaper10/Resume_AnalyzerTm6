@@ -1,6 +1,8 @@
 import React from 'react';
 import '../styling/FitScoreCard.css'; 
 
+//=========== Japjot Bedi ===========
+//The overall layout for the fit score page
 function FitScoreCard() {
   return (
     <div className="card">
