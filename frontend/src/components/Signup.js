@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { checkSecurePassword, login, signup } from "../utils/networkmanager.js"
 import "../styling/Signup.css";
 import { useNavigate } from "react-router-dom";
+import LoadingWheel from "./LoadingWheel.js";
 
 //=========== Diego Velasquez Minaya and James Goode (assistance and styling) ===========
 //The overall layout for the signup page and necessary checks
@@ -11,13 +12,16 @@ const Signup = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [failMessage, setFailMessage] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setFailMessage("");
+        setLoading(true);
         const result = await signup(email, username, password);
+        setLoading(false);
         if (result.success) {
             console.log("Sign up successful!");
             localStorage.setItem("signup", "yes")
@@ -97,6 +101,10 @@ const Signup = () => {
                 <button onClick={() => {navigate("/")}} type="button">
                     Go to Login
                 </button>
+                <br></br>
+                {loading &&
+                    <LoadingWheel></LoadingWheel>
+                }
             </form>
         </div>
     );

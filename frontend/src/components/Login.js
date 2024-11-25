@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { login , getAccountInfo} from "../utils/networkmanager.js";
 import { useNavigate } from "react-router-dom";
 import "../styling/Login.css";
+import LoadingWheel from "./LoadingWheel.js";
 
 //=========== Diego Velasquez Minaya and James Goode (assistance and styling) ===========
 //The overall layout for the login page and necessary checks
@@ -11,6 +12,7 @@ const Login = () => {
     const navigate = useNavigate();
     const [showSignUpSuccess, setSignUpSuccess] = useState(false);
     const [failMessage, setFailMessage] = useState("");
+    const [loading, setLoading] = useState(false);
 
     React.useEffect(() => {
         if(localStorage.getItem("signup") && localStorage.getItem("signup") === "yes")
@@ -29,7 +31,9 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setFailMessage("");
+        setLoading(true)
         const result = await login(email, password);
+        setLoading(false)
         if (result.success) {
             console.log("Login successful! Token:", result.token);
             localStorage.setItem("jwt", result.token);
@@ -78,6 +82,10 @@ const Login = () => {
                 <button onClick={() => {navigate("/signup")}} type="button">
                     Sign Up
                 </button>
+                <br></br>
+                {loading &&
+                    <LoadingWheel></LoadingWheel>
+                }
             </form>
         </div>
     );

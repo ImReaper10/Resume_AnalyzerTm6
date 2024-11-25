@@ -15,7 +15,7 @@
 2. Then, navigate to the tests directory in another console and run jest
     ```cmd
     cd ./tests
-    npx jest
+    npm test
     ```
 3. If all tests pass, then you should be good to go!
 
