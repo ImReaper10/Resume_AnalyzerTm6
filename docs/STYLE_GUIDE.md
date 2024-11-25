@@ -32,7 +32,7 @@
 
 ### Indentation and Spacing
 1. Use 4 spaces for indentation throughout the codebase.
-2. Add a space after control flow keywords and before curly braces.
+2. Add a space after control flow keywords and before curly braces. Depending on clarity, putting a starting curly brace on a newline is ok.
    - Example:
      ```javascript
      if (err) { 
