@@ -3,7 +3,7 @@ import { resumeUpload, jobDescriptionUpload, getAccountInfo, getUploadedData } f
 import "../styling/Upload.css";
 import { useNavigate } from 'react-router-dom';
 import { redirectIfNotLoggedIn } from '../utils/networkmanager.js';
-
+import LoadingWheel from "./LoadingWheel.js";
 
 //=========== Oscar Cotto and James Goode ===========
 //Checks if a file is valid or not (such as 2mb or less)
@@ -130,7 +130,10 @@ const Upload = () => {
                     {uploading ? "Uploading..." : "Upload"}
                 </button>
             </form>
-            {message && <p className="submission-message">{message}</p>}
+            <br></br>
+            {uploading &&
+                <LoadingWheel></LoadingWheel>
+            }
         </div>
     );
 };

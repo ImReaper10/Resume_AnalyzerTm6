@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import '../styling/View.css'; 
 import { getUploadedData } from '../utils/networkmanager.js';
+import LoadingWheel from "./LoadingWheel.js";
 
 //=========== James Goode ===========
 //The overall layout for the viewing page where you can view the uploaded resume and job description
 function View() {
     const [data, setData] = useState({});
+    const [loading, setLoading] = useState(false);
+
     React.useEffect(() => {
+        setLoading(true);
         getUploadedData().then((data) => {
+            setLoading(false);
             if(data.success)
             {
                 setData(data.data);
@@ -41,6 +46,11 @@ function View() {
                 </div>
             </div>
         }
+        {loading &&
+                <div style={{textAlign: "center"}}>
+                    <LoadingWheel></LoadingWheel>
+                </div>
+            }
         </div>
     );
 }

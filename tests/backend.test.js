@@ -231,6 +231,44 @@ describe('API Tests', () => {
         });
     });
 
+    describe('Unauthorized requests', () => {
+        test("Unable to access when unauthorized", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword("NotARealJWT");
+            try
+            {
+                const response = await axios["get"](`${API_URL}/account`, {
+                    headers: {
+                        authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                    },
+                });
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.response.status).toBe(403);
+            }
+        });
+        test("Unable to access if given incorrect authorization header", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            try
+            {
+                const response = await axios["get"](`${API_URL}/account`, {
+                    headers: {
+                        authorization: `Bearer ${encJWT.keypairId} NotAJWT`,
+                    },
+                });
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.response.status).toBe(400);
+            }
+        });
+    });
+
+
     describe('Resume Uploads', () => {
         const resumeTests = [
             {
