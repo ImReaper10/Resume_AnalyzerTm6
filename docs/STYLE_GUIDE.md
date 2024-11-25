@@ -26,12 +26,11 @@
    - Use clear prefixes for boolean variables.
    - Example: `isValidFileType`, `hasError`
 
----
 
 ## Code Formatting
 
 ### Indentation and Spacing
-1. Use 2 spaces for indentation throughout the codebase.
+1. Use 4 spaces for indentation throughout the codebase.
 2. Add a space after control flow keywords and before curly braces.
    - Example:
      ```javascript
@@ -42,17 +41,17 @@
 3. Always use braces `{}` for control structures, even if the block contains a single statement.
 4. Add blank lines to separate logical blocks of code for readability.
 
----
 
-## Commenting Conventions
+
+### Commenting Conventions
 
 1. Use inline comments sparingly to explain complex or non-obvious code.
 2. Place inline comments on a separate line above the code they refer to.
 3. Provide meaningful messages in `console.error` to help trace issues.
 
----
 
-## Name Declaration
+
+### Name Declaration
 
 - Include this in your code (mainly above functions) to distinguish between your work and others
 ```

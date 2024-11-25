@@ -116,4 +116,27 @@ npx jest
 cd ../frontend
 npm test
 ```
-2. Note that there will be warnings printed to the console, this is jest incorrectly thinking that the code that is in the frontend, is our testing code. If all the tests pass, you should be good to go!
+2. Note that there may be warnings printed to the console, this is jest incorrectly thinking that the code that is in the frontend as not part of our tests, is part of our tests. If all the tests pass, you should be good to go!
+
+# How to run
+
+## Backend
+1. Go to the backend directory, and run one of the following:
+   - Option 1
+   ```cmd
+   cd ./backend
+   npm start
+   ```
+   - Option 2
+   ```cmd
+   cd ./backend
+   node index.js
+   ```
+2. The backend should now be running on localhost:5000
+## Frontend
+1. Go to the frontend directory, and run:
+   ```cmd
+   cd ./frontend
+   npm start
+   ```
+2. Once started, go to a web browser and go to http://localhost:3000/
