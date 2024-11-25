@@ -116,7 +116,7 @@ npx jest
 cd ../frontend
 npm test
 ```
-2. Note that there may be warnings printed to the console, this is jest incorrectly thinking that the code that is in the frontend as not part of our tests, is part of our tests. If all the tests pass, you should be good to go!
+2. If all the tests pass, you should be good to go!
 
 # How to run
 
