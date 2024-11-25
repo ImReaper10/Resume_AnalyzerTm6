@@ -7,7 +7,8 @@
    - Example: `fileBuffer`, `validateFileType`
 
 2. **UPPER_SNAKE_CASE for Constants**
-   - Use UPPER_SNAKE_CASE for constants.
+   - Use UPPER_SNAKE_CASE for global constants.
+   - For constants that are temporary, such as in a function, if they are dynamically assigned then they do not have to follow this
    - Example: `SECRET_FILE_PATH`, `DATABASE_FILE_PATH`
 
 3. **Descriptive and Meaningful Names**
@@ -48,12 +49,13 @@
 1. Use inline comments sparingly to explain complex or non-obvious code.
 2. Place inline comments on a separate line above the code they refer to.
 3. Provide meaningful messages in `console.error` to help trace issues.
+    - For errors that happen "frequently" such as the file uploaded being too large, these can be commented out or left out for the production version to not clutter the console with unnecessary information
 
 
 
 ### Name Declaration
 
-- Include this in your code (mainly above functions) to distinguish between your work and others
+- Include this in your code (mainly above functions) to distinguish between your work and others (doesn't have to be exact, but at least close):
 ```
 //===================== NAME =====================
 ```
