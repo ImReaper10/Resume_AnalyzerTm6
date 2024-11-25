@@ -67,3 +67,53 @@ The system is designed to help job seekers optimize their resumes for specific r
 
 # Instructions to Setup Locally:
 
+1. First, make sure you have **Node.js** installed
+2. Then clone this repo into a local directory of your choice
+```cmd
+git clone https://github.com/ImReaper10/Resume_AnalyzerTm6.git
+```
+3. Then, go to the backend directory and run npm install in the backend branch
+```cmd
+cd ./Resume_AnalyzerTm6/backend
+npm install
+```
+4. Next, go to the frontend directory and run npm install 
+```cmd
+cd ../frontend
+npm install
+```
+5. Finally, go to the tests directory and run npm install 
+```cmd
+cd ../tests
+npm install
+```
+6. Now, everything should be set up to go
+
+# How to test
+
+## Backend
+1. To run the backend tests, first you must go to the backend directory and start the server
+   - Option 1
+   ```cmd
+   cd ../backend
+   npm start
+   ```
+   - Option 2
+   ```cmd
+   cd ../backend
+   node index.js
+   ```
+2. Then, navigate to the tests directory in another console and run jest
+```cmd
+cd ./tests
+npx jest
+```
+3. If all tests pass, then you should be good to go!
+
+## Frontend
+1. To run the frontend tests, you do **NOT** need the backend running, since we use mock requests to the backend. All you have to do is navigate to the frontend directory and run npm test, this may take a little bit. **If a message comes like "No tests found related to files changed since last commit." Type 'a' on your keyboard.**
+```cmd
+cd ../frontend
+npm test
+```
+2. Note that there will be warnings printed to the console, this is jest incorrectly thinking that the code that is in the frontend, is our testing code. If all the tests pass, you should be good to go!
