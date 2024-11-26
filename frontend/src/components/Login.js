@@ -48,7 +48,7 @@ const Login = () => {
         <div className="form-container">
             <h2>Login</h2>
             {showSignUpSuccess &&
-                <h5 style={{color: "green"}}>Sign up successful! Please log in with your new credentials.</h5>
+                <h4 style={{color: "green"}}>Sign up successful! Please log in with your new credentials.</h4>
             }
             <form onSubmit={handleSubmit}>
                 <div className="form-field">
@@ -80,12 +80,14 @@ const Login = () => {
                     Login
                 </button>
                 <button onClick={() => {navigate("/signup")}} type="button">
-                    Sign Up
+                    Go to Sign Up
                 </button>
                 <br></br>
-                {loading &&
-                    <LoadingWheel></LoadingWheel>
-                }
+                <div style={{textAlign: "center"}}>
+                    {loading &&
+                        <LoadingWheel></LoadingWheel>
+                    }
+                </div>
             </form>
         </div>
     );

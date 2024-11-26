@@ -43,7 +43,6 @@
   flex-direction: column;
   height: 100vh;
   background-color: #f4f4f9;
-  font-family: Arial, sans-serif;
   color: #333;
   width: 100%;
 }
@@ -56,6 +55,10 @@
   background-color: #6200ea;
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  font-family: "Poppins";
 }
 
 .main-title {

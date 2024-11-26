@@ -53,7 +53,7 @@ const TEST_USERNAME = "Test User";
 test('Sign up page (registering and also checking if proper messages are shown (ex. Insecure password))', async () => {
   setMocking(true);
   render(<App />);
-  userEvent.click(screen.getAllByText("Sign Up")[0]);
+  userEvent.click(screen.getAllByText("Go to Sign Up")[0]);
   await new Promise((res) => {
     setTimeout(() => {
       res()

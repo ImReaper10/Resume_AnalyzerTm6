@@ -11,6 +11,10 @@
     margin-bottom: 20px;
 }
 
+* {
+    font-family: "Poppins";
+}
+
 button {
     padding: 10px 20px;
     border: none;

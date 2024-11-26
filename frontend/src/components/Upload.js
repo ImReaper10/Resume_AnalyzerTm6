@@ -130,10 +130,11 @@ const Upload = () => {
                     {uploading ? "Uploading..." : "Upload"}
                 </button>
             </form>
-            <br></br>
-            {uploading &&
-                <LoadingWheel></LoadingWheel>
-            }
+            <div style={{textAlign: "center"}}>
+                {uploading &&
+                    <LoadingWheel></LoadingWheel>
+                }
+            </div>
         </div>
     );
 };
