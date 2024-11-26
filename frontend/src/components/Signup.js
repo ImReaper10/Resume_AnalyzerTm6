@@ -106,9 +106,11 @@ const Signup = () => {
                     Go to Login
                 </button>
                 <br></br>
-                {loading &&
-                    <LoadingWheel></LoadingWheel>
-                }
+                <div style={{textAlign: "center"}}>
+                    {loading &&
+                        <LoadingWheel></LoadingWheel>
+                    }
+                </div>
             </form>
         </div>
     );
