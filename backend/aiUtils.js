@@ -10,7 +10,7 @@ const API_URL = 'http://localhost:5000/api';
 const openai = new OpenAI();
 const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 
-//Temporary Task 23, don't remove anything from the below, only add new fields if you feel that more are necessary
+//Temporary Task 19
 const resume_analysis = z.object({
   fitScore: z.number(),
   improvementSuggestions: z.array(z.string()),

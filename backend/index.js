@@ -9,7 +9,8 @@ const {
     extractTextFromDocx
 } = require("./fileParserUtils");
 const {
-    getRawMetrics
+    getRawMetrics,
+    analyze
 } = require("./aiUtils");
 const app = express();
 const cors = require('cors');
