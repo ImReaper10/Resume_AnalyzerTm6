@@ -1,3 +1,4 @@
 /node_modules
 jwt_secret.key
+analysis_secret.key
 users.db

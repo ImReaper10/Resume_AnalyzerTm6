@@ -8,10 +8,14 @@ const {
     extractTextFromPdf,
     extractTextFromDocx
 } = require("./fileParserUtils");
+const {
+    getRawMetrics
+} = require("./aiUtils");
 const app = express();
 const cors = require('cors');
 const multer = require('multer');
 const fileType = require('file-type');
+const OpenAI = require("openai");
 app.use(express.json());
 app.use(cors());
 
@@ -36,7 +40,22 @@ const validateFileType = async (fileBuffer) => {
 
 //Below are the file paths for the database and secret key for JWT
 const SECRET_FILE_PATH = path.join(__dirname, "jwt_secret.key");
+const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 const DATABASE_FILE_PATH = path.join(__dirname, "users.db");
+
+function getAnalyzeSecret() {
+    if (fs.existsSync(SECRET_ANALYSIS_FILE_PATH)) {
+        return fs.readFileSync(SECRET_ANALYSIS_FILE_PATH, "utf8");
+    } else {
+        const newSecret = crypto.randomBytes(64).toString("hex");
+        fs.writeFileSync(SECRET_ANALYSIS_FILE_PATH, newSecret, "utf8");
+        console.log("Analysis secret generated and saved to file.");
+        return newSecret;
+    }
+}
+
+//Below is for the analyze endpoint
+const ANALYSIS_SECRET = getAnalyzeSecret();
 
 //=========== James Goode ===========
 //The below creates a JWT Secret if one is not already created, then returns the JWT Secret
@@ -508,6 +527,66 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
 
         res.status(200).json({
             message: 'Job description submitted and stored successfully.',
+            status: 'success',
+        });
+    }
+    catch(e)
+    {
+        res.status(500).json({error: e.message});
+    }
+});
+
+//=========== James Goode ===========
+//Endpoint for calling OpenAI API for analysis, and sending back raw data
+app.post('/api/analyze', async (req, res) => {
+    try
+    {
+        const {
+            resume_text,
+            job_description,
+            analysis_secret,
+            keypairId
+        } = req.body;
+
+        if (!analysis_secret) {
+            return res.status(400).json({
+                error: "Missing analysis_secret"
+            });
+        }
+
+        if (!keypairId) {
+            return res.status(400).json({
+                error: "Missing keypairId"
+            });
+        }
+
+        if(decrypt(analysis_secret, keypairId) !== ANALYSIS_SECRET)
+        {
+            return res.status(400).json({
+                error: "Analysis secret did not match"
+            });
+        }
+
+        if (!job_description || job_description.length > 10000) {
+            return res.status(400).json({
+                error: 'Invalid job_description',
+                status: 'error',
+            });
+        }
+
+        if (!resume_text || resume_text.length > 10000) {
+            return res.status(400).json({
+                error: 'Invalid resume_text',
+                status: 'error',
+            });
+        }
+
+        let rawMetrics = await getRawMetrics(job_description, resume_text);
+
+        //TODO possibly handle API failure here
+
+        res.status(200).json({
+            ... rawMetrics,
             status: 'success',
         });
     }
