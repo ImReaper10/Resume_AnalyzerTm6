@@ -31,10 +31,37 @@ async function analyze(job_description, resume_text)
 //Temporary Task 21/22, whoevers task it is you can change how the below works, this is just a temporary thing for testing.
 //I would suggest if you want to give more weight to certain words like "Java", "Python", etc. currently all words are treated the same
 //Note that what it says in sprint2.md, is outdated and the professor elaborated on what is required more here https://github.com/njit-prof-bill/resume_analyzer_documentation/blob/main/API%20descriptions.md
-async function calculateFitScore(fitScore, keywordsInJobDescription, matchedKeywordsInResume)
-{
-  return Math.round(fitScore/2 + matchedKeywordsInResume.length/keywordsInJobDescription.length*50);
+async function calculateFitScore(fitScore, keywordsInJobDescription, matchedKeywordsInResume) {
+  // Define a list of high-priority keywords (e.g., key skills, certifications, etc.)
+  const highPriorityKeywords = ["java", "python", "aws", "docker", "kubernetes", "sql", "spring boot", "cloud"];
+  
+  // Function to calculate the weight of a keyword
+  function getKeywordWeight(keyword) {
+    return highPriorityKeywords.includes(keyword.toLowerCase()) ? 2 : 1; // High-priority keywords get double weight
+  }
+
+  // Count the number of matched keywords (simple version)
+  const totalKeywordsInJob = keywordsInJobDescription.length;
+  const matchedKeywordsInResumeCount = matchedKeywordsInResume.length;
+
+  // Calculate the total match score with weightings
+  let matchScore = 0;
+  matchedKeywordsInResume.forEach(keyword => {
+    if (keywordsInJobDescription.includes(keyword)) {
+      // Increase match score based on keyword weight
+      matchScore += getKeywordWeight(keyword);
+    }
+  });
+
+  // Normalize the match score based on the total number of job keywords
+  const normalizedMatchScore = (matchScore / totalKeywordsInJob) * 100;
+
+  // Calculate the final fit score by averaging the current fit score and the normalized match score
+  const weightedFitScore = Math.round(fitScore * 0.5 + normalizedMatchScore * 0.5);
+
+  return weightedFitScore;
 }
+
 
 
 async function getMetrics(job_description, resume_text)
