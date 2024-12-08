@@ -3,13 +3,15 @@ import '../styling/FitScoreCard.css';
 
 //=========== Japjot Bedi ===========
 //The overall layout for the fit score page
-function FitScoreCard() {
+//Task 25 Diego Velasquez 
+  //Some changes
+function FitScoreCard({ fitScore = 85 }) {
   return (
     <div className="card">
       <h2>Resume Fit Score</h2>
       <div className="progress-container">
         <div className="progress">
-          <span className="score">85%</span>
+          <span className="score">{fitScore}%</span>
         </div>
       </div>
     </div>

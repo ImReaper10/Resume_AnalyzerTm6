@@ -3,8 +3,13 @@ import '../styling/MatchedKeywords.css';
 
 //=========== Japjot Bedi ===========
 //The overall layout for the keywords page
-function MatchedKeywords() {
-  const keywords = ['Python', 'Team Leadership', 'Data Analysis'];
+function MatchedKeywords({ matchedKeywords }) {
+  //Task 25 Diego Velasquez 
+  //Some changes
+  // Fallback to default static keywords if dynamic data is not provided
+  const keywords = matchedKeywords && matchedKeywords.length > 0 
+    ? matchedKeywords 
+    : ['Python', 'Team Leadership', 'Data Analysis'];
 
   return (
     <div className="card">
