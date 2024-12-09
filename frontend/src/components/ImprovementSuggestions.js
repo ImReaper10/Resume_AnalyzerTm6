@@ -14,20 +14,9 @@ function ImprovementSuggestions({ suggestions = localStorage.getItem("analysisRe
   // Categories that we will filter by (based on the backend)
   const categories = ['all', 'skills', 'experience', 'formatting'];
 
-  // Fallback default suggestions if none are provided
-  const defaultSuggestions = [
-    { category: 'skills', text: 'Include measurable achievements.' },
-    { category: 'skills', text: 'Highlight certifications in cloud computing.' },
-    { category: 'experience', text: 'Add technical skills relevant to the job.' },
-    { category: 'formatting', text: 'Ensure proper section headers formatting.' },
-  ];
-
-  // Display either passed or default suggestions
-  const displaySuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;
-
   // Filter suggestions based on the selected category
-  const filteredSuggestions = displaySuggestions.filter((suggestion) =>
-    filter === 'all' || suggestion.category === filter
+  const filteredSuggestions = suggestions.filter((suggestion) =>
+    filter === 'all' || !suggestion.category || suggestion.category === filter
   );
 
   return (
@@ -45,7 +34,7 @@ function ImprovementSuggestions({ suggestions = localStorage.getItem("analysisRe
 
       {/* Displaying filtered suggestions */}
       <ul className="list">
-        {filteredSuggestions.length > 0 ? (
+        {localStorage.getItem("analysisResults")?(filteredSuggestions.length > 0 ? (
           filteredSuggestions.map((suggestion, index) => (
             <li key={index} className="list-item">
               {suggestion.text}
@@ -54,7 +43,9 @@ function ImprovementSuggestions({ suggestions = localStorage.getItem("analysisRe
         ) : (
           // Fallback suggestion if there are no results
           <li className="list-item">No suggestions!</li>
-        )}
+        )) :
+          <li><LoadingWheel></LoadingWheel></li>
+        }
       </ul>
     </div>
   );
