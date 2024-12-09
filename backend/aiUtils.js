@@ -18,6 +18,32 @@ const resume_analysis = z.object({
   matchedKeywordsInResume: z.array(z.string()),
 });
 
+// Helper function to categorize feedback
+function categorizeFeedback(feedback) {
+  const categorizedFeedback = {
+    skills: [],
+    experience: [],
+    formatting: [],
+  };
+
+  feedback.forEach((item) => {
+    switch (item.category) {
+      case "skills":
+        categorizedFeedback.skills.push(item.text);
+        break;
+      case "experience":
+        categorizedFeedback.experience.push(item.text);
+        break;
+      case "formatting":
+        categorizedFeedback.formatting.push(item.text);
+        break;
+      default:
+        break;
+    }
+  });
+
+  return categorizedFeedback;
+}
 //Temporary task 24, look at https://github.com/njit-prof-bill/resume_analyzer_documentation/blob/main/API%20descriptions.md
 //Ignore the example response he gives, it doesn't actually fit the other requirements
 //You can add error checking, or change format if you want
@@ -25,7 +51,15 @@ async function analyze(job_description, resume_text)
 {
   let metrics = await getMetrics(job_description, resume_text);
   metrics.fitScore = await calculateFitScore(metrics.fitScore, metrics.keywordsInJobDescription, metrics.matchedKeywordsInResume);
-  return metrics;
+  
+  // Categorize the feedback
+  const categorizedFeedback = categorizeFeedback(metrics.improvementSuggestions);
+
+  // Add categorized feedback to the response
+  return {
+    ...metrics,
+    categorizedFeedback,
+  };
 }
 
 //I would suggest if you want to give more weight to certain words like "Java", "Python", etc. currently all words are treated the same
