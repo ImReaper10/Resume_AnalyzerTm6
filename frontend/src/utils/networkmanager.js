@@ -25,6 +25,8 @@ async function getBackendStatus()
 //Automates logging in with backend
 async function login(email, password) {
     localStorage.setItem("analysisResults", "");
+    didUploadResumeSinceAnalysis = false;
+    didUploadJobDescSinceAnalysis = false;
     if(useMock)
     {
         return await mockLogin(email, password);
@@ -333,6 +335,7 @@ async function getDocumentMetrics() {
     if(!didUploadResumeSinceAnalysis || !didUploadJobDescSinceAnalysis)
     {
         let results = localStorage.getItem("analysisResults");
+        console.log(results)
         if(!results)
         {
             return {success: false};
