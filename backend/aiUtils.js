@@ -13,7 +13,10 @@ const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 //Temporary Task 19
 const resume_analysis = z.object({
   fitScore: z.number(),
-  improvementSuggestions: z.array(z.string()),
+  improvementSuggestions: z.array(z.object({
+    category: z.string({description: "Must be one of 'skills', 'experience', or 'formatting'"}),
+    text: z.string()
+  })),
   keywordsInJobDescription: z.array(z.string()),
   matchedKeywordsInResume: z.array(z.string()),
 });
@@ -54,6 +57,13 @@ async function analyze(job_description, resume_text)
   
   // Categorize the feedback
   const categorizedFeedback = categorizeFeedback(metrics.improvementSuggestions);
+
+  let oldSuggestions = metrics.improvementSuggestions;
+  metrics.improvementSuggestions = [];
+  for(let x of oldSuggestions)
+  {
+    metrics.improvementSuggestions.push(x.text);
+  }
 
   // Add categorized feedback to the response
   return {
