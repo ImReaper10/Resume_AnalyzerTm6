@@ -3,14 +3,12 @@ import '../styling/ImprovementSuggestions.css';
 
 //=========== Japjot Bedi ===========
 //The overall layout for the suggestions page
-function ImprovementSuggestions({ suggestions = [] }) {
+function ImprovementSuggestions({ suggestions = localStorage.getItem("analysisResults")?JSON.parse(localStorage.getItem("analysisResults")).improvementSuggestions:["Loading..."] }) {
   //Task 25 Diego Velasquez 
   //Some changes
-  // Fallback default suggestions if none are provided
+  //Fallback default suggestions if none are provided
   const defaultSuggestions = [
-    'Include measurable achievements.',
-    'Highlight certifications in cloud computing.',
-    'Add technical skills relevant to the job.',
+    'No suggestions!',
   ];
 
   const displaySuggestions = suggestions.length > 0 ? suggestions : defaultSuggestions;

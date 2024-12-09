@@ -537,6 +537,30 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
     }
 });
 
+app.post('/api/fit-score', authenticateToken, async (req, res) => {
+    try
+    {
+        let data = temp_storage[req.user.email];
+
+        if(!data || !data.jobDescription || data.jobDescription.length == 0 || !data.resumeText || data.resumeText.length == 0)
+        {
+            res.status(500).json({error: "Data not uploaded"});
+            return;
+        }
+
+        let metrics = await analyze(data.jobDescription, data.resumeText);
+
+        res.status(200).json({
+            ... metrics,
+            status: 'success',
+        });
+    }
+    catch(e)
+    {
+        res.status(500).json({error: e.message});
+    }
+});
+
 //=========== James Goode ===========
 //Endpoint for calling OpenAI API for analysis, and sending back raw data
 app.post('/api/analyze', async (req, res) => {
