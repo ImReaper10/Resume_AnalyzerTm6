@@ -99,7 +99,7 @@ const Signup = () => {
                         <em style={{color: "red"}}>{failMessage}</em>
                     </div>
                 }
-                <button type="submit" style={{marginRight: "10px"}} disabled={email.length === 0 || password.length === 0 || confirmPassword.length === 0 || password !== confirmPassword}>
+                <button type="submit" style={{marginRight: "10px"}} disabled={email.length === 0 || password.length === 0 || confirmPassword.length === 0 || password !== confirmPassword || !checkSecurePassword(password).valid}>
                     Sign Up
                 </button>
                 <button onClick={() => {navigate("/")}} type="button">
