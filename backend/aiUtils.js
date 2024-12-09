@@ -10,13 +10,13 @@ const API_URL = 'http://localhost:5000/api';
 const openai = new OpenAI();
 const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 
-//Temporary Task 19
+//Task 19 (can be changed, but only change the description, or add stuff to the below so it does not break the frontend)
 const resume_analysis = z.object({
   fitScore: z.number(),
   improvementSuggestions: z.array(z.object({
     category: z.string({description: "Must be one of 'skills', 'experience', or 'formatting'"}),
     text: z.string()
-  })),
+  }), {description: "Preferably at least 5 suggestions"}),
   keywordsInJobDescription: z.array(z.string()),
   matchedKeywordsInResume: z.array(z.string()),
 });
