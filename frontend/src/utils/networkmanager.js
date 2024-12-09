@@ -24,6 +24,7 @@ async function getBackendStatus()
 //=========== James Goode ===========
 //Automates logging in with backend
 async function login(email, password) {
+    localStorage.setItem("analysisResults", "");
     if(useMock)
     {
         return await mockLogin(email, password);
@@ -368,7 +369,7 @@ async function getDocumentMetrics() {
                     authorization: `Bearer ${keypairId} ${encJWT}`
                 }
             });
-
+            window.location.reload();
             let results = { success: true , ...response.data};
             localStorage.setItem("analysisResults", JSON.stringify(results))
         return results;

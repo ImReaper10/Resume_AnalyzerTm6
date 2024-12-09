@@ -27,7 +27,7 @@ function DashboardLayout({ children }) {
 
     getDocumentMetrics().then((data) => {
       if (data.success) {
-
+        
       }
     });
   }, [navigate]);

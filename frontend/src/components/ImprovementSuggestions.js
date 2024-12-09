@@ -1,9 +1,10 @@
 import React from 'react';
 import '../styling/ImprovementSuggestions.css'; 
+import LoadingWheel from './LoadingWheel';
 
 //=========== Japjot Bedi ===========
 //The overall layout for the suggestions page
-function ImprovementSuggestions({ suggestions = localStorage.getItem("analysisResults")?JSON.parse(localStorage.getItem("analysisResults")).improvementSuggestions:["Loading..."] }) {
+function ImprovementSuggestions({ suggestions = localStorage.getItem("analysisResults")?JSON.parse(localStorage.getItem("analysisResults")).improvementSuggestions:[<LoadingWheel></LoadingWheel>] }) {
   //Task 25 Diego Velasquez 
   //Some changes
   //Fallback default suggestions if none are provided
