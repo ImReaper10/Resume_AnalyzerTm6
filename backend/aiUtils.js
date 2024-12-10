@@ -12,7 +12,7 @@ const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 
 //Task 19 (can be changed, but only change the description, or add stuff to the below so it does not break the frontend)
 const resume_analysis = z.object({
-  fitScore: z.number(),
+  fitScore: z.number().min(0).max(100),
   improvementSuggestions: z.array(z.object({
     category: z.string({description: "Must be one of 'skills', 'experience', or 'formatting'"}),
     text: z.string()
@@ -64,44 +64,151 @@ async function calculateFitScore(fitScore, keywordsInJobDescription, matchedKeyw
   return weightedFitScore;
 }
 
-
-
 async function getMetrics(job_description, resume_text)
 {
-  const publicKeyResponse = await axios.get(`${API_URL}/public-key`);
-  const publicKey = publicKeyResponse.data.key;
-  const keypairId = publicKeyResponse.data.keypairId;
-  const analysis_secret = crypto.publicEncrypt(
-      {
-          key: publicKey,
-          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-      },
-      Buffer.from(fs.readFileSync(SECRET_ANALYSIS_FILE_PATH))
-  );
-  let metrics = await axios.post(`${API_URL}/analyze`, {
-    keypairId,
-    job_description,
-    resume_text,
-    analysis_secret
-  });
-  //TODO check if failed
-  return metrics.data;
+  try {
+    if (!job_description || !resume_text) {
+        throw new Error("Invalid input: Job description or resume text is empty.");
+    }
+    const publicKeyResponse = await axios.get(`${API_URL}/public-key`);
+    const publicKey = publicKeyResponse.data.key;
+    const keypairId = publicKeyResponse.data.keypairId;
+    const analysis_secret = crypto.publicEncrypt(
+        {
+            key: publicKey,
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        },
+        Buffer.from(fs.readFileSync(SECRET_ANALYSIS_FILE_PATH))
+    );
+    let metrics = await axios.post(`${API_URL}/analyze`, {
+      keypairId,
+      job_description,
+      resume_text,
+      analysis_secret
+    });
+    if (!metrics || !metrics?.data) {
+        throw new Error("Invalid API Response: Missing metrics data.");
+    }
+    if (!metrics.data.keywordsInJobDescription || !metrics.data.matchedKeywordsInResume || !metrics.data.improvementSuggestions || metrics.data.fitScore < 0 || metrics.data.fitScore > 100) {
+        throw new Error("API response is invalid.");
+    }
+    return metrics.data;
+   } catch (error) {
+        if (axios.isAxiosError(error)) {
+            const status = error.response?.status || "unknown";
+            console.error(`API Error: HTTP Status ${status}. Message: ${error.message}`);
+            if (status === 400) {
+                throw new Error("Bad Request: Please check your inputs.");
+            } else if (status === 401) {
+                throw new Error("Unauthorized: Invalid API key or credentials.");
+            } else if (status === 500) {
+                throw new Error("Internal Server Error: The API failed to process the request.");
+            }
+            throw new Error(`Unexpected API error: ${error.message}`);
+        } else {
+            console.error("Error in getMetrics:", error.message);
+            throw new Error(`Unexpected error in getMetrics: ${error.message}`);
+        }
+    }
 }
 
-//Task 18
 async function getRawMetrics(job_description, resume_text)
 {
-  const completion = await openai.beta.chat.completions.parse({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: "You are a helpful resume analysis tool. Give guidance to a user about how there resume can be improved based on the given job description and resume. The fitScore is a number between 0-100." },
-      { role: "user", content: "Job description:\n" + job_description + "\n\n" + "Resume:\n==Resume Start==\n" + resume_text + "\n==Resume End=="},
-    ],
-    response_format: zodResponseFormat(resume_analysis, "resume_analysis"),
-  });
-  //TODO: Add error checking (ie. API request failed)
-  return completion.choices[0].message.parsed;
+   try {
+     if (
+                typeof job_description !== "string" ||
+                typeof resume_text !== "string" ||
+                job_description.length === 0 ||
+                resume_text.length === 0 ||
+                job_description.length > 10000 ||
+                resume_text.length > 10000
+            ) {
+                throw new Error("Invalid input: Job description or resume text is empty or exceeds allowed length.");
+            }
+    const completion = await openai.beta.chat.completions.parse({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful resume analysis tool. Give guidance to a user about how there resume can be improved based on the given job description and resume. The fitScore is a number between 0-100." },
+        { role: "user", content: "Job description:\n" + job_description + "\n\n" + "Resume:\n==Resume Start==\n" + resume_text + "\n==Resume End=="},
+      ],
+      response_format: zodResponseFormat(resume_analysis, "resume_analysis"),
+    });
+            if (!completion || !completion.choices || completion.choices.length === 0) {
+                throw new Error("API returned an empty response or invalid format.");
+            }
+            const parsed = completion.choices[0].message?.parsed;
+            if (!parsed || !parsed.keywordsInJobDescription || !parsed.matchedKeywordsInResume || !parsed.improvementSuggestions || parsed.fitScore < 0 || parsed.fitScore > 100) {
+                throw new Error("Invalid API response: Missing fitScore or feedback.");
+            }
+            return completion.choices[0].message.parsed;
+   } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status || "unknown";
+                console.error(`API Error: HTTP Status ${status}. Message: ${error.message}`);
+                if (status === 404) {
+                    return { error: "API endpoint not found (404)." };
+                } else if (status === 500) {
+                    return { error: "Internal server error (500)." };
+                }
+                return { error: "Unexpected API error: ${error.message}" };
+            } else {
+                console.error("error in getRawMetrics:", error.message);
+                return {
+                    error: "Failed to generate analysis results. Please try again later.",
+                };
+            }
+        }
 }
+
+    //Task 18
+    async function getRawMetrics(job_description, resume_text) {
+        try {
+            if (
+                typeof job_description !== "string" ||
+                typeof resume_text !== "string" ||
+                job_description.length === 0 ||
+                resume_text.length === 0 ||
+                job_description.length > 10000 ||
+                resume_text.length > 10000
+            ) {
+                throw new Error("Invalid input: Job description or resume text is empty or exceeds allowed length.");
+            }
+            const completion = await openai.beta.chat.completions.parse({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: "You are a helpful resume analysis tool. Give guidance to a user about how their resume can be improved based on the given job description and resume. The fitScore is a number between 0-100." },
+                    { role: "user", content: "Job description:\n" + job_description + "\n\n" + "Resume:\n==Resume Start==\n" + resume_text + "\n==Resume End==" },
+                ],
+                response_format: zodResponseFormat(resume_analysis, "resume_analysis"),
+            });
+            //TODO: Add error checking (ie. API request failed)
+            if (!completion || !completion.choices || completion.choices.length === 0) {
+                throw new Error("API returned an empty response or invalid format.");
+            }
+            const parsed = completion.choices[0].message?.parsed;
+            if (!parsed || !parsed.fitScore || !parsed.feedback) {
+                throw new Error("Invalid API response: Missing fitScore or feedback.");
+            }
+
+            return completion.choices[0].message.parsed;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status || "unknown";
+                console.error(`API Error: HTTP Status ${status}. Message: ${error.message}`);
+                if (status === 404) {
+                    return { error: "API endpoint not found (404)." };
+                } else if (status === 500) {
+                    return { error: "Internal server error (500)." };
+                }
+                return { error: "Unexpected API error: ${error.message}" };
+            } else {
+                console.error("error in getRawMetrics:", error.message);
+                return {
+                    error: "Failed to generate analysis results. Please try again later.",
+                };
+            }
+        }
+    }
 
 if (require.main === module) {
   (async () => {
