@@ -1,6 +1,9 @@
 import axios from 'axios';
 import forge from 'node-forge';
 
+let didUploadResumeSinceAnalysis = false;
+let didUploadJobDescSinceAnalysis = false;
+
 //=========== James Goode ===========
 //Checks if we can connect to the backend
 async function getBackendStatus()
@@ -21,6 +24,9 @@ async function getBackendStatus()
 //=========== James Goode ===========
 //Automates logging in with backend
 async function login(email, password) {
+    localStorage.setItem("analysisResults", "");
+    didUploadResumeSinceAnalysis = false;
+    didUploadJobDescSinceAnalysis = false;
     if(useMock)
     {
         return await mockLogin(email, password);
@@ -196,6 +202,7 @@ async function resumeUpload(resume) {
                 }
             });
 
+            didUploadResumeSinceAnalysis = true;
         return { success: true };
     } catch (error) {
         const errorMessage = error.response?.data?.error || error.message;
@@ -235,6 +242,7 @@ async function jobDescriptionUpload(job_description) {
                 }
             });
 
+            didUploadJobDescSinceAnalysis = true;
         return { success: true };
     } catch (error) {
         const errorMessage = error.response?.data?.error || error.message;
@@ -284,6 +292,7 @@ async function getUploadedData() {
 //=========== James Goode ===========
 //Automates deleting the currently uploaded data with the backend
 async function deleteUploadedData() {
+    localStorage.setItem("analysisResults", "");
     if(useMock)
     {
         return await mockDeleteUploadedData();
@@ -314,6 +323,59 @@ async function deleteUploadedData() {
             });
 
         return { success: true , message: response.data.message};
+    } catch (error) {
+        const errorMessage = error.response?.data?.error || error.message;
+        return { success: false, message: errorMessage };
+    }
+}
+
+//=========== James Goode ===========
+//Gets the fit score among other things from backend
+async function getDocumentMetrics() {
+    if(!didUploadResumeSinceAnalysis || !didUploadJobDescSinceAnalysis)
+    {
+        let results = localStorage.getItem("analysisResults");
+        console.log(results)
+        if(!results)
+        {
+            return {success: false};
+        }
+        return JSON.parse(results);
+    }
+    if(useMock)
+    {
+        return await mockGetDocumentMetrics();
+    }
+    try {
+        didUploadResumeSinceAnalysis = false;
+        didUploadJobDescSinceAnalysis = false;
+        const publicKeyResponse = await axios.get('http://localhost:5000/api/public-key');
+            const { key: publicKey, keypairId } = publicKeyResponse.data;
+
+            if (!publicKey || !keypairId) {
+                throw new Error('Failed to retrieve public key or keypairId.');
+            }
+
+            const forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
+
+            const encJWT = forge.util.encode64(
+                forgePublicKey.encrypt(localStorage.getItem("jwt"), 'RSA-OAEP', {
+                    md: forge.md.sha1.create(),
+                    mgf1: {
+                        md: forge.md.sha1.create()
+                    }
+                })
+            );
+
+            const response = await axios.post('http://localhost:5000/api/fit-score', {}, {        
+                headers: {
+                    authorization: `Bearer ${keypairId} ${encJWT}`
+                }
+            });
+            window.location.reload();
+            let results = { success: true , ...response.data};
+            localStorage.setItem("analysisResults", JSON.stringify(results))
+        return results;
     } catch (error) {
         const errorMessage = error.response?.data?.error || error.message;
         return { success: false, message: errorMessage };
@@ -479,7 +541,7 @@ async function mockResumeUpload(resume) {
     mockData[accountInfo.info.email].resumeText = "Mock resume text";
     mockData[accountInfo.info.email].uploadTime = Date.now();
     localStorage.setItem("uploadedData", JSON.stringify(mockData));
-
+    didUploadResumeSinceAnalysis = true;
     return { success: true };
 }
 
@@ -503,7 +565,7 @@ async function mockJobDescriptionUpload(job_description) {
     mockData[accountInfo.info.email].jobDescription = job_description.trim();
     mockData[accountInfo.info.email].uploadTime = Date.now();
     localStorage.setItem("uploadedData", JSON.stringify(mockData));
-
+    didUploadJobDescSinceAnalysis = true;
     return { success: true };
 }
 
@@ -549,4 +611,12 @@ async function mockDeleteUploadedData()
     }
 }
 
-export {getBackendStatus, login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, getUploadedData, deleteUploadedData, redirectIfNotLoggedIn, checkSecurePassword, setMocking}
+async function mockGetDocumentMetrics()
+{
+    didUploadResumeSinceAnalysis = false;
+    didUploadJobDescSinceAnalysis = false;
+    console.log("IMPLEMENT");
+    throw new Error("Implement mock get document metrics");
+}
+
+export {getBackendStatus, login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, getUploadedData, deleteUploadedData, getDocumentMetrics, redirectIfNotLoggedIn, checkSecurePassword, setMocking}
