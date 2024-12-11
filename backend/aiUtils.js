@@ -120,8 +120,8 @@ async function getRawMetrics(job_description, resume_text)
                 typeof resume_text !== "string" ||
                 job_description.length === 0 ||
                 resume_text.length === 0 ||
-                job_description.length > 10000 ||
-                resume_text.length > 10000
+                job_description.length > 5000 ||
+                resume_text.length > 5000
             ) {
                 throw new Error("Invalid input: Job description or resume text is empty or exceeds allowed length.");
             }

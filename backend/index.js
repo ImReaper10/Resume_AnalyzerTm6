@@ -467,6 +467,14 @@ app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), 
             extractedText = await extractTextFromDocx(file.buffer);
         }
 
+        if(extractedText.length > 5000)
+        {
+            return res.status(400).json({
+                error: 'File content is too large (more than 5000 characters extracted).',
+                status: 'error',
+            });
+        }
+
         // Store extracted resume text associated with the user
         if (!temp_storage[req.user.email]) {
             temp_storage[req.user.email] = {};

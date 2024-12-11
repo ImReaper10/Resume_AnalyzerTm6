@@ -44,6 +44,10 @@ const Upload = () => {
                     navigate("/dashboard");
                 }
             }
+            else
+            {
+                setMessage(data.error);
+            }
         });
     }, [navigate]);
 
@@ -126,6 +130,9 @@ const Upload = () => {
                         {charCount} characters
                     </p>
                 </div>
+                {message.length>0?
+                    <p class="error">{message}</p>
+                    :""}
                 <button type="submit" disabled={uploading || !jobDescription.trim() || jobDescription.length>5000 || !file || !checkFileValidity(file).success}>
                     {uploading ? "Uploading..." : "Upload"}
                 </button>
