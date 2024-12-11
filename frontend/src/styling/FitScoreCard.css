@@ -5,7 +5,19 @@
     text-align: center;
     background-color: #fff;
   }
-  
+  .download-button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.download-button:hover {
+    background-color: #45a049;
+}
+
   .progress-container {
     width: 150px;
     height: 150px;
