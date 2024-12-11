@@ -24,10 +24,10 @@ function DashboardLayout({ children }) {
         }
       }
     });
-
+//=============================Husain Awan========================
     getDocumentMetrics().then((data) => {
       if (data.success) {
-        
+        localStorage.setItem("analysisResults", JSON.stringify(data));
       }
     });
   }, [navigate]);
