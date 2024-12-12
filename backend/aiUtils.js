@@ -6,6 +6,7 @@ const { zodResponseFormat } = require("openai/helpers/zod");
 const crypto = require('crypto');
 const axios = require('axios');
 const API_URL = 'http://localhost:5000/api';
+const { removeStopwords, eng } = require('stopword')
 
 const openai = new OpenAI();
 const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
@@ -26,6 +27,8 @@ const resume_analysis = z.object({
 //You can add error checking, or change format if you want
 async function analyze(job_description, resume_text)
 {
+  job_description = removeStopwords(job_description.split(/[\s\.,;]+/), eng).join(" ");
+  resume_text = removeStopwords(resume_text.split(/[\s\.,;]+/), eng).join(" ");
   let metrics = await getMetrics(job_description, resume_text);
   metrics.fitScore = await calculateFitScore(metrics.fitScore, metrics.keywordsInJobDescription, metrics.matchedKeywordsInResume);
   return metrics;
@@ -129,7 +132,7 @@ async function getRawMetrics(job_description, resume_text)
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "You are a helpful resume analysis tool. Give guidance to a user about how there resume can be improved based on the given job description and resume. The fitScore is a number between 0-100." },
-        { role: "user", content: "Job description:\n" + job_description + "\n\n" + "Resume:\n==Resume Start==\n" + resume_text + "\n==Resume End=="},
+        { role: "user", content: "Job description with stopwords removed:\n" + job_description + "\n\n" + "Resume with stopwords removed:\n==Resume Start==\n" + resume_text + "\n==Resume End=="},
       ],
       response_format: zodResponseFormat(resume_analysis, "resume_analysis"),
     });
@@ -146,16 +149,13 @@ async function getRawMetrics(job_description, resume_text)
                 const status = error.response?.status || "unknown";
                 console.error(`API Error: HTTP Status ${status}. Message: ${error.message}`);
                 if (status === 404) {
-                    return { error: "API endpoint not found (404)." };
+                    throw new Error("API endpoint not found (404).");
                 } else if (status === 500) {
-                    return { error: "Internal server error (500)." };
+                    throw new Error("Internal server error (500).");
                 }
-                return { error: "Unexpected API error: ${error.message}" };
+                throw new Error(`Unexpected API error: ${error.message}`);
             } else {
-                console.error("error in getRawMetrics:", error.message);
-                return {
-                    error: "Failed to generate analysis results. Please try again later.",
-                };
+                throw new Error("Failed to generate analysis results. Please try again later. Error in getRawMetrics: " + error.message);
             }
         }
 }
