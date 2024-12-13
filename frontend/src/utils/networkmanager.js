@@ -372,9 +372,10 @@ async function getDocumentMetrics() {
                     authorization: `Bearer ${keypairId} ${encJWT}`
                 }
             });
-            window.location.reload();
+            
             let results = { success: true , ...response.data};
-            localStorage.setItem("analysisResults", JSON.stringify(results))
+            localStorage.setItem("analysisResults", JSON.stringify(results));
+            window.location.reload();
         return results;
     } catch (error) {
         const errorMessage = error.response?.data?.error || error.message;
@@ -613,10 +614,32 @@ async function mockDeleteUploadedData()
 
 async function mockGetDocumentMetrics()
 {
-    didUploadResumeSinceAnalysis = false;
-    didUploadJobDescSinceAnalysis = false;
-    console.log("IMPLEMENT");
-    throw new Error("Implement mock get document metrics");
+    try {
+        let accountInfo = await mockGetAccountInfo();
+        didUploadResumeSinceAnalysis = false;
+        didUploadJobDescSinceAnalysis = false;
+
+        let data = mockData[accountInfo.info.email];
+
+        if(!data || !data.jobDescription || data.jobDescription.length === 0 || !data.resumeText || data.resumeText.length === 0)
+        {
+            throw new Error("Data not uploaded");
+        }
+
+        await (new Promise((res) => {
+            setTimeout(() => {
+                res();
+            }, 1000);
+        }));
+
+        let results = {"success":true,"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Add more emphasis on familiarity with NoSQL databases, as it is mentioned in the job description."},{"category":"experience","text":"Highlight any experience with cloud platforms other than AWS, such as Azure or GCP, to align with the job requirements."},{"category":"skills","text":"Include specific mentions of problem-solving skills or examples that demonstrate these abilities."},{"category":"experience","text":"If possible, provide metrics or outcomes from experiences that showcase working in an agile development environment."},{"category":"formatting","text":"Ensure consistent formatting for bullet points, such as punctuation at the end of each bullet point, for better readability."}],"keywordsInJobDescription":["Software Developer","Java","Python","Backend Systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Docker","Kubernetes","Problem-solving","Object-oriented programming","Agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","AWS","Docker","Kubernetes","APIs","Object-Oriented Design","Agile"],"status":"success"};
+        localStorage.setItem("analysisResults", JSON.stringify(results))
+        window.location.reload();
+        return results;
+    } catch (error) {
+        const errorMessage = error.response?.data?.error || error.message;
+        return { success: false, message: errorMessage };
+    }
 }
 
 export {getBackendStatus, login, signup, getAccountInfo, resumeUpload, jobDescriptionUpload, getUploadedData, deleteUploadedData, getDocumentMetrics, redirectIfNotLoggedIn, checkSecurePassword, setMocking}
