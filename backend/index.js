@@ -548,6 +548,10 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
 app.post('/api/fit-score', authenticateToken, async (req, res) => {
     try
     {
+        const {
+            mock
+        } = req.body;
+
         let data = temp_storage[req.user.email];
 
         if(!data || !data.jobDescription || data.jobDescription.length == 0 || !data.resumeText || data.resumeText.length == 0)
@@ -556,7 +560,7 @@ app.post('/api/fit-score', authenticateToken, async (req, res) => {
             return;
         }
 
-        let metrics = await analyze(data.jobDescription, data.resumeText);
+        let metrics = await analyze(data.jobDescription, data.resumeText, mock);
 
         res.status(200).json({
             ... metrics,
@@ -578,7 +582,8 @@ app.post('/api/analyze', async (req, res) => {
             resume_text,
             job_description,
             analysis_secret,
-            keypairId
+            keypairId,
+            mock
         } = req.body;
 
         if (!analysis_secret) {
@@ -614,7 +619,16 @@ app.post('/api/analyze', async (req, res) => {
             });
         }
 
-        let rawMetrics = await getRawMetrics(job_description, resume_text);
+        let rawMetrics = undefined;
+
+        if(mock)
+        {
+            rawMetrics = {"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"]};
+        }
+        else
+        {
+            rawMetrics = await getRawMetrics(job_description, resume_text);
+        }
 
         //TODO possibly handle API failure here
 

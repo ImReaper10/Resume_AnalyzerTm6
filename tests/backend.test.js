@@ -3,8 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 const crypto = require('crypto');
+const {
+    getRawMetrics,
+    calculateFitScore
+} = require("../backend/aiUtils");
 
 const API_URL = 'http://localhost:5000/api';
+const SECRET_ANALYSIS_FILE_PATH = "../backend/analysis_secret.key";
 
 //=========== James Goode ===========
 //Helper function to encrypt password
@@ -421,6 +426,20 @@ describe('API Tests', () => {
 
         });
 
+        test("Get fit score (among other results)", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            const response = await axios["post"](`${API_URL}/fit-score`, {
+                mock: true
+            }, {
+                headers: {
+                    authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                },
+            });
+            expect(response.status).toBe(200);
+            expect(response.data).toStrictEqual({"fitScore":83,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"], "status": "success"});
+        });
+
         test("Delete uploaded data", async () => {
             await accountLoggedIn;
             let encJWT = await encryptPassword(jwt);
@@ -457,6 +476,204 @@ describe('API Tests', () => {
             });
             expect(response.status).toBe(200);
             expect(Object.keys(response.data.data).length).toBe(0);
+        });
+
+        test("Get fit score if data is deleted", async () => {
+            await accountLoggedIn;
+            let encJWT = await encryptPassword(jwt);
+            try
+            {
+                const response = await axios["post"](`${API_URL}/fit-score`, {
+                    mock: true
+                }, {
+                    headers: {
+                        authorization: `Bearer ${encJWT.keypairId} ${encJWT.password}`,
+                    },
+                });
+                expect(true).toBe(false);
+            }  catch (err) {
+                if (err.response) {
+                    expect(err.response.status).toBe(500);
+                    expect(err.response.data.error).toBe("Data not uploaded");
+                } else {
+                    throw err;
+                }
+            }
+        });
+    });
+
+    describe('AI and Calculation Testing', () => {
+
+        test("Send /analyze valid data", async () => {
+            const publicKeyResponse = await axios.get(`${API_URL}/public-key`);
+            const publicKey = publicKeyResponse.data.key;
+            const keypairId = publicKeyResponse.data.keypairId;
+            const analysis_secret = crypto.publicEncrypt(
+                {
+                    key: publicKey,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                },
+                Buffer.from(fs.readFileSync(SECRET_ANALYSIS_FILE_PATH))
+            );
+            try
+            {
+                let metrics = await axios.post(`${API_URL}/analyze`, {
+                    keypairId,
+                    job_description: "A".repeat(10000),
+                    resume_text: "A".repeat(10000),
+                    analysis_secret,
+                    mock: true
+                });
+                expect(metrics.status).toBe(200);
+                expect(metrics.data).toStrictEqual({"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"], status: 'success'})
+            }
+            catch(e)
+            {
+                expect(true).toBe(false);
+            }
+        });
+
+        test("Send /analyze invalid data", async () => {
+            const publicKeyResponse = await axios.get(`${API_URL}/public-key`);
+            const publicKey = publicKeyResponse.data.key;
+            const keypairId = publicKeyResponse.data.keypairId;
+            const analysis_secret = crypto.publicEncrypt(
+                {
+                    key: publicKey,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                },
+                Buffer.from(fs.readFileSync(SECRET_ANALYSIS_FILE_PATH))
+            );
+            try
+            {
+                let metrics = await axios.post(`${API_URL}/analyze`, {
+                    keypairId,
+                    job_description: "valid",
+                    resume_text: "A".repeat(10001),
+                    analysis_secret,
+                    mock: true
+                });
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.response.status).toBe(400);
+                expect(e.response.data).toStrictEqual({
+                    error: 'Invalid resume_text',
+                    status: 'error'
+                });
+            }
+            const publicKeyResponse2 = await axios.get(`${API_URL}/public-key`);
+            const publicKey2 = publicKeyResponse2.data.key;
+            const keypairId2 = publicKeyResponse2.data.keypairId;
+            const analysis_secret_2 = crypto.publicEncrypt(
+                {
+                    key: publicKey2,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                },
+                Buffer.from(fs.readFileSync(SECRET_ANALYSIS_FILE_PATH))
+            );
+            try
+            {
+                let metrics = await axios.post(`${API_URL}/analyze`, {
+                    keypairId: keypairId2,
+                    job_description: "A".repeat(10001),
+                    resume_text: "valid",
+                    analysis_secret: analysis_secret_2,
+                    mock: true
+                });
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.response.status).toBe(400);
+                expect(e.response.data).toStrictEqual({
+                    error: 'Invalid job_description',
+                    status: 'error'
+                });
+            }
+        });
+
+        test("Send /analyze invalid secret key", async () => {
+            const publicKeyResponse = await axios.get(`${API_URL}/public-key`);
+            const publicKey = publicKeyResponse.data.key;
+            const keypairId = publicKeyResponse.data.keypairId;
+            const analysis_secret = crypto.publicEncrypt(
+                {
+                    key: publicKey,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                },
+                Buffer.from("Fake key")
+            );
+            try
+            {
+                let metrics = await axios.post(`${API_URL}/analyze`, {
+                    keypairId,
+                    job_description: "A".repeat(2000),
+                    resume_text: "A".repeat(2000),
+                    analysis_secret,
+                    mock: true
+                });
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.response.status).toBe(400);
+                expect(e.response.data).toStrictEqual({
+                    error: 'Analysis secret did not match'
+                });
+            }
+        });
+
+        test("Fit score calculation", async () => {
+            expect(await calculateFitScore(80, ["a","b","c","d","Java","Python","e","f","g","cloud"], ["a","b","c","d","Java","pYtHoN"])).toBe(Math.round(40+50*(4+2*2)/(7+3*2)));
+            expect(await calculateFitScore(10, ["a"], ["a"])).toBe(5 + 50);
+            expect(await calculateFitScore(30, ["a","Java"], ["Java"])).toBe(Math.round(15+50*(2)/(3)));
+        });
+
+        test("AI Sends back a bad fit score (not in range)", async () => {
+            try
+            {
+                await getRawMetrics("Valid job desc", "Valid resume text", "mock bad fit score");
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.message).toBe("Failed to generate analysis results. Please try again later. Error in getRawMetrics: Invalid API response: Invalid fitscore.");
+            }
+        });
+
+        test("AI Sends back a response with no suggestions", async () => {
+            try
+            {
+                await getRawMetrics("Valid job desc", "Valid resume text", "mock missing suggestions");
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.message).toBe("Failed to generate analysis results. Please try again later. Error in getRawMetrics: Invalid API response: Missing fitScore, feedback, or keywords.");
+            }
+        });
+
+        test("AI Sends back a response with no keywords", async () => {
+            try
+            {
+                await getRawMetrics("Valid job desc", "Valid resume text", "mock missing keywords in resume");
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.message).toBe("Failed to generate analysis results. Please try again later. Error in getRawMetrics: Invalid API response: Missing fitScore, feedback, or keywords.");
+            }
+            try
+            {
+                await getRawMetrics("Valid job desc", "Valid resume text", "mock missing keywords in job description");
+                expect(true).toBe(false);
+            }
+            catch(e)
+            {
+                expect(e.message).toBe("Failed to generate analysis results. Please try again later. Error in getRawMetrics: Invalid API response: Missing fitScore, feedback, or keywords.");
+            }
         });
     });
 });

@@ -8,7 +8,16 @@ const axios = require('axios');
 const API_URL = 'http://localhost:5000/api';
 const { removeStopwords, eng } = require('stopword')
 
-const openai = new OpenAI();
+let openai;
+try
+{
+  openai = new OpenAI();
+}
+catch(e)
+{
+  console.log("OPENAI_API_KEY environment variable is missing or empty, if you are running tests, this is okay");
+}
+
 const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 
 //Task 19 (can be changed, but only change the description, or add stuff to the below so it does not break the frontend)
@@ -25,11 +34,11 @@ const resume_analysis = z.object({
 //Temporary task 24, look at https://github.com/njit-prof-bill/resume_analyzer_documentation/blob/main/API%20descriptions.md
 //Ignore the example response he gives, it doesn't actually fit the other requirements
 //You can add error checking, or change format if you want
-async function analyze(job_description, resume_text)
+async function analyze(job_description, resume_text, mock)
 {
   job_description = removeStopwords(job_description.split(/[\s\.,;]+/), eng).join(" ");
   resume_text = removeStopwords(resume_text.split(/[\s\.,;]+/), eng).join(" ");
-  let metrics = await getMetrics(job_description, resume_text);
+  let metrics = await getMetrics(job_description, resume_text, mock);
   metrics.fitScore = await calculateFitScore(metrics.fitScore, metrics.keywordsInJobDescription, metrics.matchedKeywordsInResume);
   return metrics;
 }
@@ -52,14 +61,16 @@ async function calculateFitScore(fitScore, keywordsInJobDescription, matchedKeyw
   // Calculate the total match score with weightings
   let matchScore = 0;
   matchedKeywordsInResume.forEach(keyword => {
-    if (keywordsInJobDescription.includes(keyword)) {
-      // Increase match score based on keyword weight
-      matchScore += getKeywordWeight(keyword);
-    }
+    matchScore += getKeywordWeight(keyword);
+  });
+
+  let maxScore = 0;
+  keywordsInJobDescription.forEach(keyword => {
+    maxScore += getKeywordWeight(keyword);
   });
 
   // Normalize the match score based on the total number of job keywords
-  const normalizedMatchScore = (matchScore / totalKeywordsInJob) * 100;
+  const normalizedMatchScore = Math.min((matchScore / maxScore) * 100, 100);
 
   // Calculate the final fit score by averaging the current fit score and the normalized match score
   const weightedFitScore = Math.round(fitScore * 0.5 + normalizedMatchScore * 0.5);
@@ -67,7 +78,7 @@ async function calculateFitScore(fitScore, keywordsInJobDescription, matchedKeyw
   return weightedFitScore;
 }
 
-async function getMetrics(job_description, resume_text)
+async function getMetrics(job_description, resume_text, mock)
 {
   try {
     if (!job_description || !resume_text) {
@@ -87,7 +98,8 @@ async function getMetrics(job_description, resume_text)
       keypairId,
       job_description,
       resume_text,
-      analysis_secret
+      analysis_secret,
+      mock
     });
     if (!metrics || !metrics?.data) {
         throw new Error("Invalid API Response: Missing metrics data.");
@@ -115,7 +127,7 @@ async function getMetrics(job_description, resume_text)
     }
 }
 
-async function getRawMetrics(job_description, resume_text)
+async function getRawMetrics(job_description, resume_text, mock)
 {
    try {
      if (
@@ -128,20 +140,17 @@ async function getRawMetrics(job_description, resume_text)
             ) {
                 throw new Error("Invalid input: Job description or resume text is empty or exceeds allowed length.");
             }
-    const completion = await openai.beta.chat.completions.parse({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a helpful resume analysis tool. Give guidance to a user about how there resume can be improved based on the given job description and resume. The fitScore is a number between 0-100." },
-        { role: "user", content: "Job description with stopwords removed:\n" + job_description + "\n\n" + "Resume with stopwords removed:\n==Resume Start==\n" + resume_text + "\n==Resume End=="},
-      ],
-      response_format: zodResponseFormat(resume_analysis, "resume_analysis"),
-    });
+            const completion = await doAIRequest(job_description, resume_text, mock);
             if (!completion || !completion.choices || completion.choices.length === 0) {
-                throw new Error("API returned an empty response or invalid format.");
+              throw new Error("API returned an empty response or invalid format.");
             }
             const parsed = completion.choices[0].message?.parsed;
-            if (!parsed || !parsed.keywordsInJobDescription || !parsed.matchedKeywordsInResume || !parsed.improvementSuggestions || parsed.fitScore < 0 || parsed.fitScore > 100) {
-                throw new Error("Invalid API response: Missing fitScore or feedback.");
+            if (!parsed || !parsed.keywordsInJobDescription || !parsed.matchedKeywordsInResume || !parsed.improvementSuggestions) {
+              throw new Error("Invalid API response: Missing fitScore, feedback, or keywords.");
+            }
+            if(parsed.fitScore < 0 || parsed.fitScore > 100)
+            {
+              throw new Error("Invalid API response: Invalid fitscore.");
             }
             return completion.choices[0].message.parsed;
    } catch (error) {
@@ -158,6 +167,90 @@ async function getRawMetrics(job_description, resume_text)
                 throw new Error("Failed to generate analysis results. Please try again later. Error in getRawMetrics: " + error.message);
             }
         }
+}
+
+async function doAIRequest(job_description, resume_text, mock)
+{
+  if(mock === "mock correct")
+  {
+    return {
+        choices: [
+          {
+            message: {
+              parsed: {"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"]}
+            }
+          }
+        ]
+    }
+  }
+  else if(mock === "mock bad fit score")
+  {
+    return {
+        choices: [
+          {
+            message: {
+              parsed: {"fitScore":105,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"]}
+            }
+          }
+        ]
+    }
+  }
+  else if(mock === "mock missing suggestions")
+  {
+    return {
+        choices: [
+          {
+            message: {
+              parsed: {"fitScore":85,"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"]}
+            }
+          }
+        ]
+    }
+  }
+  else if(mock === "mock missing keywords in job description")
+  {
+    return {
+        choices: [
+          {
+            message: {
+              parsed: {"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"]}
+            }
+          }
+        ]
+    }
+  }
+  else if(mock === "mock missing keywords in resume")
+  {
+    return {
+        choices: [
+          {
+            message: {
+              parsed: {"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"]}
+            }
+          }
+        ]
+    }
+  }
+  else if(!openai) //Mock AI response used if not setup
+  {
+    return {
+        choices: [
+          {
+            message: {
+              parsed: {"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"]}
+            }
+          }
+        ]
+    }
+  }
+  return await openai.beta.chat.completions.parse({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "You are a helpful resume analysis tool. Give guidance to a user about how there resume can be improved based on the given job description and resume. The fitScore is a number between 0-100." },
+      { role: "user", content: "Job description with stopwords removed:\n" + job_description + "\n\n" + "Resume with stopwords removed:\n==Resume Start==\n" + resume_text + "\n==Resume End=="},
+    ],
+    response_format: zodResponseFormat(resume_analysis, "resume_analysis"),
+  });
 }
 
 if (require.main === module) {
@@ -228,4 +321,4 @@ if (require.main === module) {
   })();
 }
 
-module.exports = { getRawMetrics, analyze};
+module.exports = { getRawMetrics, analyze, calculateFitScore };
