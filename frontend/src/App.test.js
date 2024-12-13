@@ -218,13 +218,44 @@ test('Uploading valid resume (after trying invalid files) and uploading job desc
             screen.getByText("Highlight any experience with cloud platforms other than AWS, such as Azure or GCP, to align with the job requirements.");
             let dropdown = document.getElementsByClassName("filter-dropdown")[0];
             userEvent.selectOptions(dropdown, "Skills");
+            let passed = false;
             try
             {
               screen.getByText("Highlight any experience with cloud platforms other than AWS, such as Azure or GCP, to align with the job requirements.");
-              fail();
+              passed = true;
             }
             catch(e){}
+            if(passed)
+            {
+              fail();
+            }
             screen.getByText("Include specific mentions of problem-solving skills or examples that demonstrate these abilities.");
+            userEvent.selectOptions(dropdown, "Formatting");
+            screen.getByText("Ensure consistent formatting for bullet points, such as punctuation at the end of each bullet point, for better readability.");
+            passed = false;
+            try
+            {
+              screen.getByText("Add more emphasis on familiarity with NoSQL databases, as it is mentioned in the job description.");
+              passed = true;
+            }
+            catch(e){}
+            if(passed)
+            {
+              fail();
+            }
+            userEvent.selectOptions(dropdown, "Experience");
+            screen.getByText("Highlight any experience with cloud platforms other than AWS, such as Azure or GCP, to align with the job requirements.");
+            passed = false;
+            try
+            {
+              screen.getByText("Include specific mentions of problem-solving skills or examples that demonstrate these abilities.");
+              passed = true;
+            }
+            catch(e){}
+            if(passed)
+            {
+              fail();
+            }
             res2()
           },500);
         });
