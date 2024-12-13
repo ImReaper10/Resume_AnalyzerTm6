@@ -652,7 +652,7 @@ app.get('/api/status', (req, res) => {
 });
 
 //Starts the server
-app.listen(5000, "localhost", () => {
+app.listen(5000, "127.0.0.1", () => {
     console.log("Server started...");
 });
 

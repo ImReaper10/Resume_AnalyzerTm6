@@ -367,7 +367,7 @@ async function getDocumentMetrics() {
                 })
             );
 
-            const response = await axios.post('http://localhost:5000/api/fit-score', {}, {        
+            const response = await axios.post('http://localhost:5000/api/fit-score', {mock: localStorage.getItem("useMockAI")}, {        
                 headers: {
                     authorization: `Bearer ${keypairId} ${encJWT}`
                 }

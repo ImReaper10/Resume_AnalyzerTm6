@@ -631,6 +631,17 @@ describe('API Tests', () => {
             expect(await calculateFitScore(30, ["a","Java"], ["Java"])).toBe(Math.round(15+50*(2)/(3)));
         });
 
+        test("AI Sends valid response", async () => {
+            try
+            {
+                await getRawMetrics("Valid job desc", "Valid resume text", "mock correct");
+            }
+            catch(e)
+            {
+                expect(true).toBe(false);
+            }
+        });
+
         test("AI Sends back a bad fit score (not in range)", async () => {
             try
             {
