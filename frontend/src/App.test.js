@@ -174,6 +174,10 @@ test('Uploading valid resume (after trying invalid files) and uploading job desc
     }, 500)
   });
   screen.getByText("Loading...");
+});
+
+test('Check fit score and other analysis display data', async () => {
+  render(<App />);
   await new Promise((res, err) => {
     setTimeout(async () => {
       let data = await getUploadedData();
