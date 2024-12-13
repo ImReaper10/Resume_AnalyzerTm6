@@ -8,7 +8,7 @@ const {
     calculateFitScore
 } = require("../backend/aiUtils");
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://127.0.0.1:5000/api';
 const SECRET_ANALYSIS_FILE_PATH = "../backend/analysis_secret.key";
 
 //=========== James Goode ===========
@@ -631,7 +631,7 @@ describe('API Tests', () => {
             expect(await calculateFitScore(30, ["a","Java"], ["Java"])).toBe(Math.round(15+50*(2)/(3)));
         });
 
-        test("AI Sends valid response", async () => {
+        test("Necessary checks for if AI Sends valid response", async () => {
             try
             {
                 await getRawMetrics("Valid job desc", "Valid resume text", "mock correct");
@@ -642,7 +642,7 @@ describe('API Tests', () => {
             }
         });
 
-        test("AI Sends back a bad fit score (not in range)", async () => {
+        test("Necessary checks for if AI Sends back a bad fit score (not in range)", async () => {
             try
             {
                 await getRawMetrics("Valid job desc", "Valid resume text", "mock bad fit score");
@@ -654,7 +654,7 @@ describe('API Tests', () => {
             }
         });
 
-        test("AI Sends back a response with no suggestions", async () => {
+        test("Necessary checks for if AI Sends back a response with no suggestions", async () => {
             try
             {
                 await getRawMetrics("Valid job desc", "Valid resume text", "mock missing suggestions");
@@ -666,7 +666,7 @@ describe('API Tests', () => {
             }
         });
 
-        test("AI Sends back a response with no keywords", async () => {
+        test("Necessary checks for if AI Sends back a response with no keywords", async () => {
             try
             {
                 await getRawMetrics("Valid job desc", "Valid resume text", "mock missing keywords in resume");
