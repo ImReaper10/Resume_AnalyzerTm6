@@ -4,7 +4,7 @@ const { removeDirectory } = require('cypress-delete-downloads-folder');
 module.exports = defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      on('task', { removeDirectory })
+      on('task', { removeDirectory });
     },
   },
   chromeWebSecurity: false

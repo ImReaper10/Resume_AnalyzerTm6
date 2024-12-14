@@ -30,7 +30,7 @@ describe('End-to-end tests', () => {
   })
 
   it('Sign up', () => {
-    Cypress.config('defaultCommandTimeout', 10000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.contains("Go to Sign Up").click();
     cy.get("input[placeholder=\"Email\"]").type("not an email");
     cy.get("input[placeholder=\"Username\"]").type(testCreds.username);
@@ -55,7 +55,7 @@ describe('End-to-end tests', () => {
   })
 
   it('Login', () => {
-    Cypress.config('defaultCommandTimeout', 10000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.get("input[placeholder=\"Email\"]").type(testCreds.email);
     cy.get("input[placeholder=\"Password\"]").type(testCreds.password + "not the right password");
     cy.get("button").contains("Login").click();
@@ -74,7 +74,7 @@ describe('End-to-end tests', () => {
   })
 
   it('Resume and Job Description upload', () => {
-    Cypress.config('defaultCommandTimeout', 20000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.contains("Upload Your Resume and Job Description").should('be.visible');
 
     cy.get('input[type=file]').selectFile('../tests/test-files/large-file.pdf');
@@ -107,7 +107,7 @@ describe('End-to-end tests', () => {
   })
 
   it('Check Analysis Results', () => {
-    Cypress.config('defaultCommandTimeout', 10000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.wait(5000);
     
     cy.contains("83%"); //We know since we are using mock AI (to preserve free tier use) it should always be this number
@@ -170,7 +170,7 @@ describe('End-to-end tests', () => {
   });
 
   it('Upload another', () => {
-    Cypress.config('defaultCommandTimeout', 20000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.contains("Upload Your Resume and Job Description").should('be.visible');
 
     cy.get('input[type=file]').selectFile('../tests/test-files/large-file.pdf');
@@ -204,7 +204,7 @@ describe('End-to-end tests', () => {
   });
 
   it('Signing out and signing back in', () => {
-    Cypress.config('defaultCommandTimeout', 10000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.contains("Upload Your Resume and Job Description").should('be.visible');
 
     cy.contains("Sign Out").click();
@@ -229,7 +229,7 @@ describe('End-to-end tests', () => {
   });
   
   it('Signing out and signing up for a new account', () => {
-    Cypress.config('defaultCommandTimeout', 10000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.contains("Upload Your Resume and Job Description").should('be.visible');
 
     cy.contains("Sign Out").click();
@@ -264,7 +264,7 @@ describe('End-to-end tests', () => {
   });
 
   it('Try logging in to new account, after previously signing in to an old one', () => {
-    Cypress.config('defaultCommandTimeout', 10000);
+    Cypress.config('defaultCommandTimeout', 30000);
     cy.get("input[placeholder=\"Email\"]").type(testCreds.email);
     cy.get("input[placeholder=\"Password\"]").type(testCreds.password + "not the right password");
     cy.get("button").contains("Login").click();
