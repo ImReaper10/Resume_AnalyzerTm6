@@ -92,7 +92,7 @@ const Signup = () => {
                     }
                 </div>
                 <div style={{marginTop: "5px", marginBottom: "20px"}}>
-                    <em>Password must be at least 8 characters long, include at least one lowercase letter, one uppercase letter, and a special character</em>
+                    <em>Password must be at least 8 characters long, include at least one lowercase letter, one uppercase letter, one number, and a special character</em>
                 </div>
                 {failMessage &&
                     <div style={{marginTop: "5px", marginBottom: "10px"}}>
