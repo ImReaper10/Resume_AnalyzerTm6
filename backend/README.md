@@ -19,8 +19,13 @@
     ```
 3. If all tests pass, then you should be good to go!
 
-## How to run the backend
-1. Go to the backend directory, and run one of the following:
+## Backend
+1. First, in whatever terminal you want to run the backend in be sure to set up an enviromental variable **OPENAI_API_KEY** to your OpenAI API secret key:
+   - For example, in VS Code powershell you would do:
+   ```cmd
+   $env:OPENAI_API_KEY="sk-..."
+   ```
+2. Now go to the backend directory, and run one of the following:
    - Option 1
    ```cmd
    cd ./backend
@@ -31,4 +36,4 @@
    cd ./backend
    node index.js
    ```
-2. The backend should now be running on localhost:5000
+3. The backend should now be running on localhost:5000
