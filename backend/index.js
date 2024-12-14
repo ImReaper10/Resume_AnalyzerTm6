@@ -530,6 +530,51 @@ app.listen(5000, "localhost", () => {
     console.log("Server started...");
 });
 
+//=========== Japjot Bedi ===========
+//This is the endpoint for retrieving fitscore and feedback
+app.post('/api/fit-score', authenticateToken, async (req, res) => {
+    try {
+        const {resumeText, jobDescription} = req.body;
+
+        if (!resumeText || !jobDescription) {
+            return res.status(400).json({
+                error: "Invalid input data. Both Resume Text and Job Description are required."
+            });
+        }
+        if (typeof resumeText !== 'string' || typeof jobDescription !== 'string') {
+            return res.status(400).json({
+                error: "Invalid input data. Resume Text and Job Description must be strings."
+            });
+        }
+        if (resumeText.length > 10000 || jobDescription.length > 10000) {
+            return res.status(400).json({
+                error: "Input data exceeds the 10,000 character limit per field."
+            });
+        }
+
+        // Check if data exists in temp_storage
+        const user_data = temp_storage[req.user.email];
+        if (!user_data) {
+            return res.status(400).json({
+                error: "No uploaded data found for the user. Please upload your resume and job description first."
+            });
+        }
+
+        const analyze = require('./aiUtils').analyze;
+        const analysisResult = await analyze(resumeText, jobDescription);
+
+        res.status(200).json({
+            fit_score: analysisResult.fit_score,
+            feedback: analysisResult.feedback
+        });
+    } catch (error) {
+        console.error("Error in /api/fit-score:", error.message);
+        res.status(500).json({
+            error: "An internal server error occurred. Please try again later."
+        });
+    }
+    });
+
 //=========== James Goode ===========
 //Middleware for authentication
 function authenticateToken(req, res, next) {
