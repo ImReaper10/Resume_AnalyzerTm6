@@ -80,7 +80,7 @@ Setup: [Link to setup](docs/SETUP.md)
 
 ![Suggestions Page 2](/docs/images/suggestions2.png)
 
-8. On the fit score page you can download a PDF of **all** the analysis results, this is what that PDF could look like:
+8. On the fit score page you can download a PDF of **all** the analysis results, this is what that PDF should look like:
 
 ![PDF Example](/docs/images/pdfexample.png)
 
