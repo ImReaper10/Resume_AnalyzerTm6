@@ -9,7 +9,7 @@ function generateRandomCredentials() {
   const domains = ['example.com', 'test.com', 'domain.com'];
   const randomEmail = `${randomString(8)}@${domains[Math.floor(Math.random() * domains.length)]}`;
   const randomUsername = randomString(10);
-  const randomPassword = randomString(12) + "123";
+  const randomPassword = randomString(12) + "aA123";
 
   return {
       email: randomEmail,
