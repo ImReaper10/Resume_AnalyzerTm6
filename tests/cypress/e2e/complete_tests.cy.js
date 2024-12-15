@@ -20,7 +20,8 @@ function generateRandomCredentials() {
 
 let testCreds = generateRandomCredentials();
 
-
+//========= James Goode =========
+//The complete end to end testing of our web app (needs both the frontend and backend to work properly)
 describe('End-to-end tests', () => {
   beforeEach(() => {
     cy.deleteDownloadsFolder();

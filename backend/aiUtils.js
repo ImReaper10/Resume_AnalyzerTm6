@@ -18,9 +18,11 @@ catch(e)
   console.log("OPENAI_API_KEY environment variable is missing or empty, if you are running tests, this is okay");
 }
 
+//Key for securing /analyze requests so they only happen by authorized parties (mainly just the backend)
 const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 
-//Task 19 (can be changed, but only change the description, or add stuff to the below so it does not break the frontend)
+//=========== Javin Kenta ===========
+//Task 19, format of response from AI
 const resume_analysis = z.object({
   fitScore: z.number({description: "Must be a number between 0 and 100"}),
   improvementSuggestions: z.array(z.object({
@@ -31,9 +33,8 @@ const resume_analysis = z.object({
   matchedKeywordsInResume: z.array(z.string()),
 });
 
-//Temporary task 24, look at https://github.com/njit-prof-bill/resume_analyzer_documentation/blob/main/API%20descriptions.md
-//Ignore the example response he gives, it doesn't actually fit the other requirements
-//You can add error checking, or change format if you want
+//=========== Japjot Bedi and James Goode ===========
+//Function called by /api/fitscore to get analysis results
 async function analyze(job_description, resume_text, mock)
 {
   job_description = removeStopwords(job_description.split(/[\s\.,;]+/), eng).join(" ");
@@ -43,8 +44,8 @@ async function analyze(job_description, resume_text, mock)
   return metrics;
 }
 
-//I would suggest if you want to give more weight to certain words like "Java", "Python", etc. currently all words are treated the same
-//Note that what it says in sprint2.md, is outdated and the professor elaborated on what is required more here https://github.com/njit-prof-bill/resume_analyzer_documentation/blob/main/API%20descriptions.md
+//=========== Oscar Cotto ===========
+//Task 22, Fit score calculations, that prioritizes specific words over others
 async function calculateFitScore(fitScore, keywordsInJobDescription, matchedKeywordsInResume) {
   // Define a list of high-priority keywords (e.g., key skills, certifications, etc.)
   const highPriorityKeywords = ["java", "python", "aws", "docker", "kubernetes", "sql", "spring boot", "cloud"];
@@ -78,6 +79,8 @@ async function calculateFitScore(fitScore, keywordsInJobDescription, matchedKeyw
   return weightedFitScore;
 }
 
+//=========== James Goode ===========
+//Checks correctness of data returned from calling /api/analyze
 async function getMetrics(job_description, resume_text, mock)
 {
   try {
@@ -127,6 +130,8 @@ async function getMetrics(job_description, resume_text, mock)
     }
 }
 
+//=========== James Goode and Javin Kenta (for format of response and request) ===========
+//Sends request to OpenAI, and makes sure parameters and response is valid
 async function getRawMetrics(job_description, resume_text, mock)
 {
    try {
@@ -169,6 +174,8 @@ async function getRawMetrics(job_description, resume_text, mock)
         }
 }
 
+//=========== James Goode and Javin Kenta (for format of response and request) ===========
+//Put together the request, and also handle potential mocking of a real request
 async function doAIRequest(job_description, resume_text, mock)
 {
   if(mock === "mock correct")
@@ -253,6 +260,8 @@ async function doAIRequest(job_description, resume_text, mock)
   });
 }
 
+//=========== James Goode ===========
+//Sample code for checking if OpenAI request works correctly
 if (require.main === module) {
   (async () => {
     let analysis = await analyze("We are seeking a skilled Software Developer proficient in Java and Python to join our dynamic development team. The ideal candidate will design, develop, and maintain scalable backend systems and applications, leveraging the strengths of both programming languages. Responsibilities include building efficient APIs, integrating third-party libraries, implementing robust data-processing pipelines, and ensuring optimal application performance. Candidates should have experience with frameworks such as Spring Boot for Java and Django or Flask for Python, as well as familiarity with databases (SQL and NoSQL), cloud platforms (AWS, Azure, or GCP), and containerization tools like Docker and Kubernetes. Strong problem-solving skills, a solid understanding of object-oriented programming, and the ability to work in an agile development environment are essential.", `

@@ -545,6 +545,8 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
     }
 });
 
+//=========== Japjot Bedi and James Goode ===========
+//Endpoint for getting fitscore that also triggers the analysis
 app.post('/api/fit-score', authenticateToken, async (req, res) => {
     try
     {
@@ -629,8 +631,6 @@ app.post('/api/analyze', async (req, res) => {
         {
             rawMetrics = await getRawMetrics(job_description, resume_text);
         }
-
-        //TODO possibly handle API failure here
 
         res.status(200).json({
             ... rawMetrics,
