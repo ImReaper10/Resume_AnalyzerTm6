@@ -138,6 +138,8 @@ test('Login page (logging in to an existing account, as well as checking message
   });
 });
 
+jest.setTimeout(10000);
+
 //=========== Japjot Bedi amd James Goode ===========
 //Tests uploading a resume and browsing the dashboard after
 test('Uploading valid resume (after trying invalid files) and uploading job description (after trying invalid descriptions (ex. too long))', async () => {
@@ -167,6 +169,16 @@ test('Uploading valid resume (after trying invalid files) and uploading job desc
   catch(e) {}
   userEvent.click(screen.getByText("Upload"));
   await new Promise((res, err) => {
+    setTimeout(() => {
+      res();
+    }, 500)
+  });
+  screen.getByText("Loading...");
+});
+
+test('Check fit score and other analysis display data', async () => {
+  render(<App />);
+  await new Promise((res, err) => {
     setTimeout(async () => {
       let data = await getUploadedData();
       expect(data.data.resumeText).toEqual("Mock resume text")
@@ -188,6 +200,9 @@ test('Uploading valid resume (after trying invalid files) and uploading job desc
         await new Promise((res2) => {
           setTimeout(async () => {
             screen.getByText("Matched Skills and Keywords");
+            screen.getByText("Java");
+            screen.getByText("Python");
+            screen.getByText("Spring Boot");
             res2()
           },500);
         });
@@ -203,6 +218,57 @@ test('Uploading valid resume (after trying invalid files) and uploading job desc
         await new Promise((res2) => {
           setTimeout(async () => {
             screen.getByText("Improvement Suggestions");
+            screen.getByText("Add more emphasis on familiarity with NoSQL databases, as it is mentioned in the job description.");
+            screen.getByText("Highlight any experience with cloud platforms other than AWS, such as Azure or GCP, to align with the job requirements.");
+            let dropdown = document.getElementsByClassName("filter-dropdown")[0];
+            userEvent.selectOptions(dropdown, "Skills");
+            let passed = false;
+            try
+            {
+              screen.getByText("Highlight any experience with cloud platforms other than AWS, such as Azure or GCP, to align with the job requirements.");
+              passed = true;
+            }
+            catch(e){}
+            if(passed)
+            {
+              fail();
+            }
+            screen.getByText("Include specific mentions of problem-solving skills or examples that demonstrate these abilities.");
+            userEvent.selectOptions(dropdown, "Formatting");
+            screen.getByText("Ensure consistent formatting for bullet points, such as punctuation at the end of each bullet point, for better readability.");
+            passed = false;
+            try
+            {
+              screen.getByText("Add more emphasis on familiarity with NoSQL databases, as it is mentioned in the job description.");
+              passed = true;
+            }
+            catch(e){}
+            if(passed)
+            {
+              fail();
+            }
+            userEvent.selectOptions(dropdown, "Experience");
+            screen.getByText("Highlight any experience with cloud platforms other than AWS, such as Azure or GCP, to align with the job requirements.");
+            passed = false;
+            try
+            {
+              screen.getByText("Include specific mentions of problem-solving skills or examples that demonstrate these abilities.");
+              passed = true;
+            }
+            catch(e){}
+            if(passed)
+            {
+              fail();
+            }
+            res2()
+          },500);
+        });
+        let viewFitScore = screen.getByText("Fit Score");
+        userEvent.click(viewFitScore);
+        await new Promise((res2) => {
+          setTimeout(async () => {
+            screen.getByText("85%");
+            screen.getByText("Download PDF Report");
             res2()
           },500);
         });
@@ -212,7 +278,7 @@ test('Uploading valid resume (after trying invalid files) and uploading job desc
         err(e);
       }
       res()
-    }, 1000);
+    }, 2100);
   });
 });
 

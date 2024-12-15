@@ -44,6 +44,10 @@ const Upload = () => {
                     navigate("/dashboard");
                 }
             }
+            else
+            {
+                setMessage(data.error);
+            }
         });
     }, [navigate]);
 
@@ -90,7 +94,7 @@ const Upload = () => {
     };
 
     const handleDescriptionChange = (e) => {
-        const input = e.target.value;
+        const input = e.target.value==="sample text..."?"We are seeking a skilled Software Developer proficient in Java and Python to join our dynamic development team. The ideal candidate will design, develop, and maintain scalable backend systems and applications, leveraging the strengths of both programming languages. Responsibilities include building efficient APIs, integrating third-party libraries, implementing robust data-processing pipelines, and ensuring optimal application performance. Candidates should have experience with frameworks such as Spring Boot for Java and Django or Flask for Python, as well as familiarity with databases (SQL and NoSQL), cloud platforms (AWS, Azure, or GCP), and containerization tools like Docker and Kubernetes. Strong problem-solving skills, a solid understanding of object-oriented programming, and the ability to work in an agile development environment are essential.":e.target.value;
         setJobDesc(input);
         setCharCount(input.length);
     };
@@ -126,6 +130,9 @@ const Upload = () => {
                         {charCount} characters
                     </p>
                 </div>
+                {message.length>0?
+                    <p class="error">{message}</p>
+                    :""}
                 <button type="submit" disabled={uploading || !jobDescription.trim() || jobDescription.length>5000 || !file || !checkFileValidity(file).success}>
                     {uploading ? "Uploading..." : "Upload"}
                 </button>

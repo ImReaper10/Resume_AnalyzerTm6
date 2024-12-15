@@ -1,16 +1,32 @@
 .card {
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    background-color: #fff;
-  }
-  
-  .list {
-    list-style-type: disc;
-    margin-left: 20px;
-  }
-  
-  .list-item {
-    margin: 10px 0;
-  }
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+.list {
+  list-style-type: disc;
+  margin-left: 20px;
+}
+
+.list-item {
+  margin: 10px 0;
+}
+
+.filter-dropdown {
+  margin: 10px 0;
+  padding: 8px;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+
+.filter-dropdown:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
   

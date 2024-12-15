@@ -8,10 +8,15 @@ const {
     extractTextFromPdf,
     extractTextFromDocx
 } = require("./fileParserUtils");
+const {
+    getRawMetrics,
+    analyze
+} = require("./aiUtils");
 const app = express();
 const cors = require('cors');
 const multer = require('multer');
 const fileType = require('file-type');
+const OpenAI = require("openai");
 app.use(express.json());
 app.use(cors());
 
@@ -36,7 +41,22 @@ const validateFileType = async (fileBuffer) => {
 
 //Below are the file paths for the database and secret key for JWT
 const SECRET_FILE_PATH = path.join(__dirname, "jwt_secret.key");
+const SECRET_ANALYSIS_FILE_PATH = path.join(__dirname, "analysis_secret.key");
 const DATABASE_FILE_PATH = path.join(__dirname, "users.db");
+
+function getAnalyzeSecret() {
+    if (fs.existsSync(SECRET_ANALYSIS_FILE_PATH)) {
+        return fs.readFileSync(SECRET_ANALYSIS_FILE_PATH, "utf8");
+    } else {
+        const newSecret = crypto.randomBytes(64).toString("hex");
+        fs.writeFileSync(SECRET_ANALYSIS_FILE_PATH, newSecret, "utf8");
+        console.log("Analysis secret generated and saved to file.");
+        return newSecret;
+    }
+}
+
+//Below is for the analyze endpoint
+const ANALYSIS_SECRET = getAnalyzeSecret();
 
 //=========== James Goode ===========
 //The below creates a JWT Secret if one is not already created, then returns the JWT Secret
@@ -447,6 +467,14 @@ app.post('/api/resume-upload', authenticateToken, upload.single('resume_file'), 
             extractedText = await extractTextFromDocx(file.buffer);
         }
 
+        if(extractedText.length > 5000)
+        {
+            return res.status(400).json({
+                error: 'File content is too large (more than 5000 characters extracted).',
+                status: 'error',
+            });
+        }
+
         // Store extracted resume text associated with the user
         if (!temp_storage[req.user.email]) {
             temp_storage[req.user.email] = {};
@@ -517,6 +545,104 @@ app.post('/api/job-description', authenticateToken, (req, res) => {
     }
 });
 
+//=========== Japjot Bedi and James Goode ===========
+//Endpoint for getting fitscore that also triggers the analysis
+app.post('/api/fit-score', authenticateToken, async (req, res) => {
+    try
+    {
+        const {
+            mock
+        } = req.body;
+
+        let data = temp_storage[req.user.email];
+
+        if(!data || !data.jobDescription || data.jobDescription.length == 0 || !data.resumeText || data.resumeText.length == 0)
+        {
+            res.status(500).json({error: "Data not uploaded"});
+            return;
+        }
+
+        let metrics = await analyze(data.jobDescription, data.resumeText, mock);
+
+        res.status(200).json({
+            ... metrics,
+            status: 'success',
+        });
+    }
+    catch(e)
+    {
+        res.status(500).json({error: e.message});
+    }
+});
+
+//=========== James Goode ===========
+//Endpoint for calling OpenAI API for analysis, and sending back raw data
+app.post('/api/analyze', async (req, res) => {
+    try
+    {
+        const {
+            resume_text,
+            job_description,
+            analysis_secret,
+            keypairId,
+            mock
+        } = req.body;
+
+        if (!analysis_secret) {
+            return res.status(400).json({
+                error: "Missing analysis_secret"
+            });
+        }
+
+        if (!keypairId) {
+            return res.status(400).json({
+                error: "Missing keypairId"
+            });
+        }
+
+        if(decrypt(analysis_secret, keypairId) !== ANALYSIS_SECRET)
+        {
+            return res.status(400).json({
+                error: "Analysis secret did not match"
+            });
+        }
+
+        if (!job_description || job_description.length > 10000) {
+            return res.status(400).json({
+                error: 'Invalid job_description',
+                status: 'error',
+            });
+        }
+
+        if (!resume_text || resume_text.length > 10000) {
+            return res.status(400).json({
+                error: 'Invalid resume_text',
+                status: 'error',
+            });
+        }
+
+        let rawMetrics = undefined;
+
+        if(mock)
+        {
+            rawMetrics = {"fitScore":85,"improvementSuggestions":[{"category":"skills","text":"Highlight specific experience with cloud platforms, mentioning familiarity with Azure and GCP, as well as AWS."},{"category":"experience","text":"Include specific metrics or accomplishments related to working in an agile development environment."},{"category":"skills","text":"Add more details about problem-solving skills and any examples of complex challenges you've tackled."},{"category":"experience","text":"Explicitly mention any experience with NoSQL databases in the resume, as it is highlighted in the job description."},{"category":"formatting","text":"Consider separating skills into categories more clearly to improve readability, such as 'Programming Languages', 'Frameworks', 'Tools', and 'Databases'."}],"keywordsInJobDescription":["Software Developer","Java","Python","backend systems","APIs","Spring Boot","Django","Flask","SQL","NoSQL","AWS","Azure","GCP","Docker","Kubernetes","problem-solving","object-oriented programming","agile"],"matchedKeywordsInResume":["Java","Python","Spring Boot","Django","Flask","Docker","Kubernetes","AWS","MySQL","PostgreSQL","MongoDB","Agile","Object-Oriented Design","API Integration"]};
+        }
+        else
+        {
+            rawMetrics = await getRawMetrics(job_description, resume_text);
+        }
+
+        res.status(200).json({
+            ... rawMetrics,
+            status: 'success',
+        });
+    }
+    catch(e)
+    {
+        res.status(500).json({error: e.message});
+    }
+});
+
 //=========== James Goode ===========
 //Endpoint for mainly checking if the backend is running
 app.get('/api/status', (req, res) => {
@@ -526,7 +652,7 @@ app.get('/api/status', (req, res) => {
 });
 
 //Starts the server
-app.listen(5000, "localhost", () => {
+app.listen(5000, "127.0.0.1", () => {
     console.log("Server started...");
 });
 

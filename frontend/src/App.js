@@ -7,7 +7,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import FitScoreCard from "./components/FitScoreCard";
 import MatchedKeywords from "./components/MatchedKeywords";
 import ImprovementSuggestions from "./components/ImprovementSuggestions";
-import { getAccountInfo, getBackendStatus } from "./utils/networkmanager.js";
+import { getAccountInfo, getBackendStatus, deleteUploadedData} from "./utils/networkmanager.js";
 import "./App.css"
 import View from "./components/View";
 
@@ -55,7 +55,7 @@ const App = () => {
         {username &&
           <div className="user-controls">
             <span className="username-placeholder">{username}</span>
-            <button onClick={() => {localStorage.setItem('jwt', ''); window.location.reload()}} className="signout-button">Sign Out</button>
+            <button onClick={async () => {await deleteUploadedData(); localStorage.setItem('jwt', ''); window.location.reload()}} className="signout-button">Sign Out</button>
           </div>
         }
       </header>
